@@ -1,0 +1,30 @@
+.whiteboard {
+  --estiplan-bg: #fafafa;
+  --estiplan-bg-pattern: #e0e0e0;
+  --estiplan-node-bg: #ffffff;
+  --estiplan-node-border: #333333;
+  --estiplan-node-text: #1a1a1a;
+  --estiplan-node-subtext: #666666;
+  --estiplan-edge-color: #555555;
+  --estiplan-edge-highlight: #e63946;
+  --estiplan-edge-dim: #cccccc;
+  --estiplan-card-bg: #f0f0f0;
+  --estiplan-card-border: #bbbbbb;
+  --estiplan-card-text: #1a1a1a;
+  --estiplan-menu-bg: #ffffff;
+  --estiplan-menu-border: #dddddd;
+  --estiplan-menu-text: #1a1a1a;
+  --estiplan-menu-hover: #f0f0f0;
+  --estiplan-toolbar-bg: #ffffff;
+  --estiplan-toolbar-border: #e0e0e0;
+  --estiplan-toolbar-text: #333333;
+  --estiplan-btn-bg: #f5f5f5;
+  --estiplan-btn-hover: #e8e8e8;
+  --estiplan-btn-text: #333333;
+  --estiplan-btn-border: #cccccc;
+  --estiplan-font: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --estiplan-node-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+  --estiplan-handle-color: #555555;
+  --estiplan-type-badge-bg: #eaeaea;
+  --estiplan-type-badge-text: #555555;
+}

@@ -1,0 +1,194 @@
+.variableNode {
+  position: relative;
+  cursor: grab;
+  /* The node bounding box is ONLY the circle (64x64).
+     Labels are positioned absolutely so they don't shift handles. */
+  width: 64px;
+  height: 64px;
+}
+
+/* ---- Circle ---- */
+
+.circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--estiplan-node-bg);
+  border: 2px solid var(--estiplan-node-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--estiplan-node-shadow);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.circle:hover {
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
+}
+
+.circleHighlighted {
+  border-color: var(--estiplan-edge-highlight);
+  box-shadow: 0 0 12px var(--estiplan-edge-highlight);
+}
+
+.circleDimmed {
+  opacity: 0.35;
+}
+
+.circleUnobserved {
+  border-style: dashed;
+}
+
+.shorthand {
+  font-family: var(--estiplan-font);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--estiplan-node-text);
+  user-select: none;
+  letter-spacing: 0.5px;
+}
+
+/* ---- Label group (absolutely positioned, outside bounding box) ---- */
+
+.labelGroup {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* TB: labels to the RIGHT of circle */
+.labelRight {
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  align-items: flex-start;
+}
+
+/* LR: labels BELOW circle */
+.labelBelow {
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  align-items: center;
+}
+
+.name {
+  font-family: var(--estiplan-font);
+  font-size: 11px;
+  color: var(--estiplan-node-subtext);
+  max-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: auto;
+}
+
+.nameInput {
+  font-family: var(--estiplan-font);
+  font-size: 11px;
+  color: var(--estiplan-node-text);
+  background: transparent;
+  border: 1px solid var(--estiplan-node-border);
+  border-radius: 3px;
+  padding: 1px 4px;
+  max-width: 100px;
+  outline: none;
+  pointer-events: auto;
+}
+
+.typeBadge {
+  font-family: var(--estiplan-font);
+  font-size: 9px;
+  color: var(--estiplan-type-badge-text);
+  background: var(--estiplan-type-badge-bg);
+  border-radius: 8px;
+  padding: 1px 6px;
+  margin-top: 2px;
+}
+
+/* ---- Handles ---- */
+
+.handle {
+  border: none !important;
+}
+
+/* Target handle: small circle */
+.handleCircle {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: var(--estiplan-handle-color) !important;
+}
+
+/* Source handle: triangle */
+.handleTriangle {
+  width: 0 !important;
+  height: 0 !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+
+/* Triangle pointing DOWN (TB mode) */
+.triangleDown {
+  border-left: 6px solid transparent !important;
+  border-right: 6px solid transparent !important;
+  border-top: 8px solid var(--estiplan-handle-color) !important;
+  border-bottom: none !important;
+}
+
+/* Triangle pointing RIGHT (LR mode) */
+.triangleRight {
+  border-top: 6px solid transparent !important;
+  border-bottom: 6px solid transparent !important;
+  border-left: 8px solid var(--estiplan-handle-color) !important;
+  border-right: none !important;
+}
+
+/* ---- Handle tooltips ---- */
+
+.handleTooltip {
+  position: absolute;
+  white-space: nowrap;
+  font-family: var(--estiplan-font);
+  font-size: 10px;
+  color: var(--estiplan-node-text);
+  background: var(--estiplan-node-bg);
+  border: 1px solid var(--estiplan-node-border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Above the circle (target in TB) */
+.tooltipAbove {
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Below the circle (source in TB) */
+.tooltipBelow {
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Left of circle (target in LR) */
+.tooltipLeft {
+  right: calc(100% + 6px);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* Right of circle (source in LR) */
+.tooltipRight {
+  left: calc(100% + 6px);
+  top: 50%;
+  transform: translateY(-50%);
+}

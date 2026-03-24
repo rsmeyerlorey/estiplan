@@ -1,0 +1,27 @@
+.edgePath {
+  stroke: var(--estiplan-edge-color);
+  stroke-width: 2;
+  fill: none;
+  transition: stroke 0.2s, opacity 0.2s;
+}
+
+.edgePathHighlighted {
+  stroke: var(--estiplan-edge-highlight);
+  stroke-width: 3;
+}
+
+.edgePathDimmed {
+  stroke: var(--estiplan-edge-dim);
+  opacity: 0.4;
+}
+
+.annotationLabel {
+  font-family: var(--estiplan-font);
+  font-size: 10px;
+  color: var(--estiplan-node-subtext);
+  background: var(--estiplan-node-bg);
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid var(--estiplan-menu-border);
+  pointer-events: all;
+}

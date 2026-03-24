@@ -1,0 +1,34 @@
+.chalkboard {
+  --estiplan-bg: #2d4a3e;
+  --estiplan-bg-pattern: #3a5c4e;
+  --estiplan-node-bg: rgba(255, 255, 255, 0.04);
+  --estiplan-node-border: #e8e8d8;
+  --estiplan-node-text: #f0f0e8;
+  --estiplan-node-subtext: #b8c8b8;
+  --estiplan-edge-color: #d4d4c8;
+  --estiplan-edge-highlight: #ffb347;
+  --estiplan-edge-dim: #5a7a6a;
+  --estiplan-card-bg: rgba(255, 255, 255, 0.08);
+  --estiplan-card-border: rgba(255, 255, 255, 0.2);
+  --estiplan-card-text: #f0f0e8;
+  --estiplan-menu-bg: #1e3a2e;
+  --estiplan-menu-border: #3a5c4e;
+  --estiplan-menu-text: #e8e8d8;
+  --estiplan-menu-hover: #2d4a3e;
+  --estiplan-toolbar-bg: #1e3a2e;
+  --estiplan-toolbar-border: #3a5c4e;
+  --estiplan-toolbar-text: #e8e8d8;
+  --estiplan-btn-bg: #2d4a3e;
+  --estiplan-btn-hover: #3a5c4e;
+  --estiplan-btn-text: #e8e8d8;
+  --estiplan-btn-border: #4a6c5e;
+  --estiplan-font: 'Caveat', 'Comic Sans MS', cursive;
+  --estiplan-node-shadow: 0 0 6px rgba(255, 255, 255, 0.08);
+  --estiplan-handle-color: #d4d4c8;
+  --estiplan-type-badge-bg: rgba(255, 255, 255, 0.1);
+  --estiplan-type-badge-text: #b8c8b8;
+}
+
+.chalkboard * {
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.1);
+}

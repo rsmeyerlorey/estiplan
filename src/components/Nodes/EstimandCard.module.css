@@ -1,0 +1,56 @@
+.estimandCard {
+  background: var(--estiplan-card-bg);
+  border: 1px solid var(--estiplan-card-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  min-width: 180px;
+  max-width: 280px;
+  font-family: var(--estiplan-font);
+  box-shadow: var(--estiplan-node-shadow);
+  position: relative;
+}
+
+.plainEnglish {
+  font-size: 12px;
+  color: var(--estiplan-card-text);
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.doNotation {
+  font-size: 14px;
+  font-family: 'Cambria Math', 'Latin Modern Math', Georgia, serif;
+  color: var(--estiplan-card-text);
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.kindBadge {
+  display: inline-block;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--estiplan-edge-highlight);
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+
+.closeButton {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  background: none;
+  border: none;
+  color: var(--estiplan-card-text);
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.5;
+  line-height: 1;
+  padding: 2px;
+}
+
+.closeButton:hover {
+  opacity: 1;
+}

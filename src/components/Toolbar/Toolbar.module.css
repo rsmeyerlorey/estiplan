@@ -1,0 +1,54 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--estiplan-toolbar-bg);
+  border-bottom: 1px solid var(--estiplan-toolbar-border);
+  font-family: var(--estiplan-font);
+  z-index: 10;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--estiplan-toolbar-text);
+  margin-right: 16px;
+  letter-spacing: -0.5px;
+}
+
+.btn {
+  padding: 6px 14px;
+  background: var(--estiplan-btn-bg);
+  border: 1px solid var(--estiplan-btn-border);
+  border-radius: 6px;
+  color: var(--estiplan-btn-text);
+  font-family: var(--estiplan-font);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn:hover {
+  background: var(--estiplan-btn-hover);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.addInput {
+  padding: 6px 10px;
+  border: 1px solid var(--estiplan-btn-border);
+  border-radius: 6px;
+  background: var(--estiplan-node-bg);
+  color: var(--estiplan-btn-text);
+  font-family: var(--estiplan-font);
+  font-size: 13px;
+  outline: none;
+  width: 160px;
+}
+
+.addInput:focus {
+  border-color: var(--estiplan-edge-highlight);
+}

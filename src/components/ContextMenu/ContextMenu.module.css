@@ -1,0 +1,80 @@
+.contextMenu {
+  position: fixed;
+  z-index: 1000;
+  background: var(--estiplan-menu-bg);
+  border: 1px solid var(--estiplan-menu-border);
+  border-radius: 6px;
+  padding: 4px 0;
+  min-width: 180px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  font-family: var(--estiplan-font);
+}
+
+.menuItem {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  background: none;
+  border: none;
+  color: var(--estiplan-menu-text);
+  font-family: var(--estiplan-font);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.menuItem:hover {
+  background: var(--estiplan-menu-hover);
+}
+
+.menuItemDanger {
+  color: #e63946;
+}
+
+.separator {
+  height: 1px;
+  background: var(--estiplan-menu-border);
+  margin: 4px 0;
+}
+
+.subMenuLabel {
+  padding: 6px 14px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--estiplan-node-subtext);
+  font-family: var(--estiplan-font);
+}
+
+.inputRow {
+  padding: 6px 14px;
+  display: flex;
+  gap: 6px;
+}
+
+.inputRow input {
+  flex: 1;
+  font-family: var(--estiplan-font);
+  font-size: 13px;
+  padding: 4px 8px;
+  border: 1px solid var(--estiplan-menu-border);
+  border-radius: 4px;
+  background: var(--estiplan-node-bg);
+  color: var(--estiplan-menu-text);
+  outline: none;
+}
+
+.inputRow input:focus {
+  border-color: var(--estiplan-edge-highlight);
+}
+
+.checkboxRow {
+  padding: 4px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--estiplan-menu-text);
+  font-family: var(--estiplan-font);
+}
