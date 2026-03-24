@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand';
 import type { CausalEdgeData } from '../../types/dag';
 import { generateId } from '../../utils/id';
+import { wouldCreateCycle } from '../../dag/pathfinding';
 
 export interface CausalEdge {
   id: string;
@@ -11,7 +12,7 @@ export interface CausalEdge {
 
 export interface EdgeSlice {
   causalEdges: CausalEdge[];
-  addCausalEdge: (source: string, target: string) => void;
+  addCausalEdge: (source: string, target: string) => boolean;
   updateEdgeAnnotation: (id: string, annotation: string) => void;
   removeCausalEdge: (id: string) => void;
   removeEdgesForVariable: (variableId: string) => void;
@@ -19,10 +20,26 @@ export interface EdgeSlice {
 
 export const createEdgeSlice: StateCreator<EdgeSlice, [], [], EdgeSlice> = (
   set,
+  get,
 ) => ({
   causalEdges: [],
 
   addCausalEdge: (source, target) => {
+    // Prevent self-loops
+    if (source === target) return false;
+
+    const existing = get().causalEdges;
+
+    // Prevent duplicate edges
+    if (existing.some((e) => e.source === source && e.target === target)) {
+      return false;
+    }
+
+    // Prevent cycles — would adding this edge create a path from target back to source?
+    if (wouldCreateCycle(existing, source, target)) {
+      return false;
+    }
+
     const edge: CausalEdge = {
       id: generateId('edge'),
       source,
@@ -32,6 +49,7 @@ export const createEdgeSlice: StateCreator<EdgeSlice, [], [], EdgeSlice> = (
     set((state) => ({
       causalEdges: [...state.causalEdges, edge],
     }));
+    return true;
   },
 
   updateEdgeAnnotation: (id, annotation) => {

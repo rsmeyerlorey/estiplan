@@ -1,11 +1,13 @@
 import { useState, useRef, useCallback } from 'react';
 import { useEstiplanStore } from '../../store/useEstiplanStore';
+import type { SavedState } from '../../store/persistence';
 import styles from './Toolbar.module.css';
 
 export function Toolbar() {
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const addVariable = useEstiplanStore((s) => s.addVariable);
   const setNodePosition = useEstiplanStore((s) => s.setNodePosition);
@@ -14,6 +16,13 @@ export function Toolbar() {
   const theme = useEstiplanStore((s) => s.theme);
   const flowDirection = useEstiplanStore((s) => s.flowDirection);
   const toggleFlowDirection = useEstiplanStore((s) => s.toggleFlowDirection);
+  const clearAll = useEstiplanStore((s) => s.clearAll);
+  const loadState = useEstiplanStore((s) => s.loadState);
+  const getSerializableState = useEstiplanStore((s) => s.getSerializableState);
+  const undo = useEstiplanStore((s) => s.undo);
+  const redo = useEstiplanStore((s) => s.redo);
+  const canUndo = useEstiplanStore((s) => s.canUndo);
+  const canRedo = useEstiplanStore((s) => s.canRedo);
 
   const handleAdd = useCallback(() => {
     if (adding) {
@@ -39,9 +48,140 @@ export function Toolbar() {
     setTimeout(() => autoLayout(), 0);
   }, [toggleFlowDirection, autoLayout]);
 
+  const handleNew = useCallback(() => {
+    if (
+      window.confirm(
+        'Start a new estiplan? Unsaved changes will be lost.',
+      )
+    ) {
+      clearAll();
+    }
+  }, [clearAll]);
+
+  const handleSave = useCallback(() => {
+    const state = getSerializableState();
+    const json = JSON.stringify(state, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'estiplan.estiplan.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [getSerializableState]);
+
+  const handleLoad = useCallback(() => {
+    fileInputRef.current?.click();
+  }, []);
+
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const parsed = JSON.parse(ev.target?.result as string) as SavedState;
+          if (parsed.version !== 1) {
+            alert('Invalid estiplan file: unsupported version.');
+            return;
+          }
+          if (!Array.isArray(parsed.variables) || !Array.isArray(parsed.causalEdges)) {
+            alert('Invalid estiplan file: missing required data.');
+            return;
+          }
+          loadState(parsed);
+        } catch {
+          alert('Failed to load file. Make sure it is a valid .estiplan.json file.');
+        }
+      };
+      reader.readAsText(file);
+
+      // Reset the input so the same file can be loaded again
+      e.target.value = '';
+    },
+    [loadState],
+  );
+
+  const handleDuplicateVariant = useCallback(() => {
+    // Export current state first
+    const state = getSerializableState();
+    const json = JSON.stringify(state, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'estiplan-original.estiplan.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    // Now clear estimands from the canvas (keep variables and edges)
+    // Load current state but with empty estimands
+    const variant: SavedState = {
+      ...state,
+      estimands: [],
+    };
+    // Offset all positions slightly so user sees the change
+    const offsetPositions = { ...variant.nodePositions };
+    for (const key of Object.keys(offsetPositions)) {
+      offsetPositions[key] = {
+        x: offsetPositions[key].x + 20,
+        y: offsetPositions[key].y + 20,
+      };
+    }
+    variant.nodePositions = offsetPositions;
+    loadState(variant);
+  }, [getSerializableState, loadState]);
+
   return (
     <div className={styles.toolbar}>
       <span className={styles.title}>Estiplan</span>
+
+      <button className={styles.btn} onClick={handleNew} title="New estiplan">
+        New
+      </button>
+
+      <div className={styles.separator} />
+
+      <button className={styles.btn} onClick={handleSave} title="Save to file">
+        Save
+      </button>
+      <button className={styles.btn} onClick={handleLoad} title="Load from file">
+        Load
+      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".json,.estiplan.json"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
+
+      <div className={styles.separator} />
+
+      <button
+        className={styles.btn}
+        onClick={undo}
+        disabled={!canUndo()}
+        title="Undo (Ctrl+Z)"
+      >
+        Undo
+      </button>
+      <button
+        className={styles.btn}
+        onClick={redo}
+        disabled={!canRedo()}
+        title="Redo (Ctrl+Y)"
+      >
+        Redo
+      </button>
+
+      <div className={styles.separator} />
 
       {adding && (
         <input
@@ -81,6 +221,14 @@ export function Toolbar() {
         }
       >
         {flowDirection === 'TB' ? '\u2B07 Top\u2013Down' : '\u27A1 Left\u2013Right'}
+      </button>
+
+      <button
+        className={styles.btn}
+        onClick={handleDuplicateVariant}
+        title="Export current state, then clear estimands for a variant"
+      >
+        Duplicate as variant
       </button>
 
       <div className={styles.spacer} />

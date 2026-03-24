@@ -149,14 +149,22 @@ export function EstiplanCanvas() {
     [setNodePosition],
   );
 
+  const pushSnapshot = useEstiplanStore((s) => s.pushSnapshot);
+
   const onConnect = useCallback(
     (connection: Connection) => {
       if (connection.source && connection.target) {
+        // addCausalEdge returns false for self-loops and duplicates
         addCausalEdge(connection.source, connection.target);
       }
     },
     [addCausalEdge],
   );
+
+  const onNodeDragStop = useCallback(() => {
+    // Push a history snapshot when the user finishes dragging a node
+    pushSnapshot();
+  }, [pushSnapshot]);
 
   const onNodeContextMenu = useCallback(
     (event: React.MouseEvent, node: Node) => {
@@ -219,6 +227,7 @@ export function EstiplanCanvas() {
         edges={rfEdges}
         onNodesChange={onNodesChange}
         onConnect={onConnect}
+        onNodeDragStop={onNodeDragStop}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         defaultEdgeOptions={defaultEdgeOptions}

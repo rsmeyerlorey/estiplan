@@ -47,3 +47,32 @@ export function buildAdjacency(
   }
   return adj;
 }
+
+/**
+ * Check if adding an edge from `source` to `target` would create a cycle.
+ * A cycle exists if there is already a path from `target` back to `source`
+ * in the existing graph (meaning the new edge would complete a loop).
+ */
+export function wouldCreateCycle(
+  edges: { source: string; target: string }[],
+  newSource: string,
+  newTarget: string,
+): boolean {
+  const adj = buildAdjacency(edges);
+  // Check: can we reach newSource starting from newTarget?
+  const visited = new Set<string>();
+  const stack = [newTarget];
+
+  while (stack.length > 0) {
+    const current = stack.pop()!;
+    if (current === newSource) return true;
+    if (visited.has(current)) continue;
+    visited.add(current);
+    const neighbors = adj.get(current) || [];
+    for (const neighbor of neighbors) {
+      stack.push(neighbor);
+    }
+  }
+
+  return false;
+}

@@ -29,8 +29,20 @@
   transition: background 0.15s;
 }
 
-.btn:hover {
+.btn:hover:not(:disabled) {
   background: var(--estiplan-btn-hover);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.separator {
+  width: 1px;
+  height: 24px;
+  background: var(--estiplan-btn-border);
+  margin: 0 4px;
 }
 
 .spacer {

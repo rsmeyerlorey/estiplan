@@ -16,7 +16,10 @@ import { applyDagreLayout } from '../dag/layout';
 import {
   saveToLocalStorage,
   loadFromLocalStorage,
+  clearLocalStorage,
+  type SavedState,
 } from './persistence';
+import { historyManager, type HistorySnapshot } from './history';
 
 export interface NodePositions {
   [nodeId: string]: { x: number; y: number };
@@ -31,17 +34,50 @@ interface CanvasSlice {
   deleteVariable: (id: string) => void;
 }
 
+interface AppSlice {
+  clearAll: () => void;
+  loadState: (saved: SavedState) => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: () => boolean;
+  canRedo: () => boolean;
+  pushSnapshot: () => void;
+  getSerializableState: () => SavedState;
+}
+
 type EstiplanStore = VariableSlice &
   EdgeSlice &
   EstimandSlice &
   ThemeSlice &
-  CanvasSlice;
+  CanvasSlice &
+  AppSlice;
 
 // Load saved state
 const saved = loadFromLocalStorage();
 
 export const useEstiplanStore = create<EstiplanStore>()(
   subscribeWithSelector((set, get, api) => {
+    function getCurrentSnapshot(): HistorySnapshot {
+      const s = get();
+      return {
+        variables: Array.from(s.variables.entries()),
+        causalEdges: s.causalEdges,
+        estimands: s.estimands,
+        nodePositions: s.nodePositions,
+      };
+    }
+
+    function applySnapshot(snapshot: HistorySnapshot) {
+      set({
+        variables: new Map(snapshot.variables),
+        causalEdges: snapshot.causalEdges,
+        estimands: snapshot.estimands,
+        nodePositions: snapshot.nodePositions,
+        highlightedEstimandId: null,
+        highlightedPaths: null,
+      });
+    }
+
     const store: EstiplanStore = {
       ...createVariableSlice(set, get, api),
       ...createEdgeSlice(set, get, api),
@@ -163,6 +199,74 @@ export const useEstiplanStore = create<EstiplanStore>()(
           return { nodePositions: newPositions };
         });
       },
+
+      // App-level actions
+      clearAll: () => {
+        get().pushSnapshot();
+        clearLocalStorage();
+        set({
+          variables: new Map(),
+          causalEdges: [],
+          estimands: [],
+          nodePositions: {},
+          highlightedEstimandId: null,
+          highlightedPaths: null,
+        });
+      },
+
+      loadState: (savedState: SavedState) => {
+        get().pushSnapshot();
+        set({
+          variables: new Map(savedState.variables),
+          causalEdges: savedState.causalEdges,
+          estimands: savedState.estimands,
+          nodePositions: savedState.nodePositions,
+          theme: savedState.theme,
+          flowDirection: savedState.flowDirection,
+          highlightedEstimandId: null,
+          highlightedPaths: null,
+        });
+      },
+
+      getSerializableState: () => {
+        const s = get();
+        return {
+          version: 1 as const,
+          variables: Array.from(s.variables.entries()),
+          causalEdges: s.causalEdges,
+          estimands: s.estimands,
+          nodePositions: s.nodePositions,
+          theme: s.theme,
+          flowDirection: s.flowDirection,
+        };
+      },
+
+      pushSnapshot: () => {
+        historyManager.push(getCurrentSnapshot());
+      },
+
+      undo: () => {
+        const current = getCurrentSnapshot();
+        const snapshot = historyManager.undo(current);
+        if (snapshot) {
+          historyManager.pause();
+          applySnapshot(snapshot);
+          historyManager.resume();
+        }
+      },
+
+      redo: () => {
+        const current = getCurrentSnapshot();
+        const snapshot = historyManager.redo(current);
+        if (snapshot) {
+          historyManager.pause();
+          applySnapshot(snapshot);
+          historyManager.resume();
+        }
+      },
+
+      canUndo: () => historyManager.canUndo,
+      canRedo: () => historyManager.canRedo,
     };
 
     // Apply saved state overrides
@@ -197,4 +301,31 @@ useEstiplanStore.subscribe(
     }, 500);
   },
   { equalityFn: () => false }, // always trigger (we debounce anyway)
+);
+
+// History snapshot: push snapshots when state changes (debounced to avoid
+// capturing every pixel of node dragging)
+let historyTimeout: ReturnType<typeof setTimeout> | null = null;
+
+useEstiplanStore.subscribe(
+  (state) => ({
+    variables: state.variables,
+    causalEdges: state.causalEdges,
+    estimands: state.estimands,
+    nodePositions: state.nodePositions,
+  }),
+  () => {
+    if (historyManager.isPaused) return;
+    if (historyTimeout) clearTimeout(historyTimeout);
+    historyTimeout = setTimeout(() => {
+      const s = useEstiplanStore.getState();
+      historyManager.push({
+        variables: Array.from(s.variables.entries()),
+        causalEdges: s.causalEdges,
+        estimands: s.estimands,
+        nodePositions: s.nodePositions,
+      });
+    }, 800);
+  },
+  { equalityFn: () => false },
 );
