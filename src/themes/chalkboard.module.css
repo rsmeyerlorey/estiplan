@@ -27,6 +27,7 @@
   --estiplan-handle-color: #d4d4c8;
   --estiplan-type-badge-bg: rgba(255, 255, 255, 0.1);
   --estiplan-type-badge-text: #b8c8b8;
+  --estiplan-code-bg: rgba(0, 0, 0, 0.25);
 }
 
 .chalkboard * {

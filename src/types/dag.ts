@@ -39,4 +39,12 @@ export interface Estimand {
   paths: string[][];
   doNotation: string;
   plainEnglish: string;
+  /** Whether interaction terms are enabled for this estimand's model */
+  interaction: boolean;
+  /** Generated math notation lines */
+  mathLines: string[];
+  /** Generated brms code */
+  brmsCode: string;
+  /** brms family string */
+  brmsFamily: string;
 }

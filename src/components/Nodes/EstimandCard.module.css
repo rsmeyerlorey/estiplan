@@ -3,27 +3,14 @@
   border: 1px solid var(--estiplan-card-border);
   border-radius: 8px;
   padding: 12px 16px;
-  min-width: 180px;
-  max-width: 280px;
+  min-width: 220px;
+  max-width: 340px;
   font-family: var(--estiplan-font);
   box-shadow: var(--estiplan-node-shadow);
   position: relative;
 }
 
-.plainEnglish {
-  font-size: 12px;
-  color: var(--estiplan-card-text);
-  margin-bottom: 6px;
-  line-height: 1.4;
-}
-
-.doNotation {
-  font-size: 14px;
-  font-family: 'Cambria Math', 'Latin Modern Math', Georgia, serif;
-  color: var(--estiplan-card-text);
-  font-style: italic;
-  opacity: 0.9;
-}
+/* ── Estimand header ── */
 
 .kindBadge {
   display: inline-block;
@@ -37,6 +24,153 @@
   margin-bottom: 6px;
 }
 
+.plainEnglish {
+  font-size: 12px;
+  color: var(--estiplan-card-text);
+  margin-bottom: 4px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+.doNotation {
+  font-size: 14px;
+  font-family: 'Cambria Math', 'Latin Modern Math', Georgia, serif;
+  color: var(--estiplan-card-text);
+  font-style: italic;
+  opacity: 0.9;
+}
+
+/* ── Divider ── */
+
+.divider {
+  height: 1px;
+  background: var(--estiplan-card-border);
+  margin: 10px 0;
+}
+
+/* ── Section labels ── */
+
+.sectionLabel {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--estiplan-card-text);
+  opacity: 0.5;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Math block ── */
+
+.mathBlock {
+  margin-bottom: 10px;
+}
+
+.mathLine {
+  font-size: 13px;
+  font-family: 'Cambria Math', 'Latin Modern Math', Georgia, serif;
+  color: var(--estiplan-card-text);
+  line-height: 1.6;
+  padding-left: 8px;
+}
+
+/* ── Code block ── */
+
+.codeBlock {
+  font-size: 11px;
+  font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+  color: var(--estiplan-card-text);
+  background: var(--estiplan-code-bg, rgba(0, 0, 0, 0.06));
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin: 0 0 8px 0;
+  overflow-x: auto;
+  line-height: 1.5;
+  white-space: pre;
+}
+
+/* ── Copy button ── */
+
+.copyButton {
+  background: none;
+  border: none;
+  color: var(--estiplan-card-text);
+  cursor: pointer;
+  font-size: 12px;
+  opacity: 0.4;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.copyButton:hover {
+  opacity: 1;
+}
+
+/* ── Interaction toggle ── */
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+
+.toggleRow input[type='checkbox'] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.toggleLabel {
+  font-size: 10px;
+  color: var(--estiplan-card-text);
+  opacity: 0.7;
+}
+
+/* ── Info button & popup ── */
+
+.infoRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.infoButton {
+  background: none;
+  border: none;
+  color: var(--estiplan-card-text);
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.35;
+  padding: 0;
+  line-height: 1;
+}
+
+.infoButton:hover {
+  opacity: 0.8;
+}
+
+.infoPopup {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  /* Solid background — not transparent — so text doesn't bleed through */
+  background: var(--estiplan-menu-bg);
+  border: 1px solid var(--estiplan-card-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 10px;
+  color: var(--estiplan-card-text);
+  line-height: 1.4;
+  width: 240px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  z-index: 50;
+}
+
+/* ── Close button ── */
+
 .closeButton {
   position: absolute;
   top: 4px;
@@ -45,7 +179,7 @@
   border: none;
   color: var(--estiplan-card-text);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
   opacity: 0.5;
   line-height: 1;
   padding: 2px;
