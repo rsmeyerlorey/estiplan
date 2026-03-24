@@ -11,6 +11,12 @@ function brmsFamily(outcomeType: VariableType): string {
       return 'poisson()';
     case 'categorical':
       return 'categorical()';
+    case 'ordinal':
+      return 'cumulative("logit")';
+    case 'proportion':
+      return 'Beta()';
+    case 'positive-continuous':
+      return 'lognormal()';
     default:
       return 'gaussian()';
   }
@@ -163,6 +169,12 @@ function mathDistribution(type: VariableType): string {
       return 'Poisson(\u03bb\u1d62)';
     case 'categorical':
       return 'Categorical(\u03c0\u1d62)';
+    case 'ordinal':
+      return 'OrderedLogit(\u03c6\u1d62, \u03ba)';
+    case 'proportion':
+      return 'Beta(\u03bc\u1d62, \u03c6)';
+    case 'positive-continuous':
+      return 'LogNormal(\u03bc\u1d62, \u03c3)';
     default:
       return 'Normal(\u03bc\u1d62, \u03c3)';
   }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import styles from './ContextMenu.module.css';
 
 interface ContextMenuProps {
@@ -10,6 +10,7 @@ interface ContextMenuProps {
 
 export function ContextMenu({ x, y, onClose, children }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const [adjusted, setAdjusted] = useState({ x, y });
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -34,15 +35,25 @@ export function ContextMenu({ x, y, onClose, children }: ContextMenuProps) {
     };
   }, [onClose]);
 
-  // Adjust position to keep within viewport
-  const adjustedX = Math.min(x, window.innerWidth - 220);
-  const adjustedY = Math.min(y, window.innerHeight - 300);
+  // Measure actual size and adjust position to stay within viewport
+  useEffect(() => {
+    if (ref.current) {
+      const rect = ref.current.getBoundingClientRect();
+      const padding = 8;
+      const newX = Math.min(x, window.innerWidth - rect.width - padding);
+      const newY = Math.min(y, window.innerHeight - rect.height - padding);
+      setAdjusted({
+        x: Math.max(padding, newX),
+        y: Math.max(padding, newY),
+      });
+    }
+  }, [x, y, children]); // re-measure when children change (e.g., submenu swap)
 
   return (
     <div
       ref={ref}
       className={styles.contextMenu}
-      style={{ left: adjustedX, top: adjustedY }}
+      style={{ left: adjusted.x, top: adjusted.y }}
     >
       {children}
     </div>

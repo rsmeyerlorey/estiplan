@@ -1,5 +1,5 @@
 import type { Variable } from '../types/dag';
-import type { Estimand } from '../types/dag';
+import type { Estimand, StatisticalModel } from '../types/dag';
 import type { CausalEdge } from './slices/edgeSlice';
 import type { NodePositions } from './useEstiplanStore';
 import type { ThemeMode, FlowDirection } from '../types/theme';
@@ -11,6 +11,7 @@ export interface SavedState {
   variables: [string, Variable][];
   causalEdges: CausalEdge[];
   estimands: Estimand[];
+  models?: StatisticalModel[];
   nodePositions: NodePositions;
   theme: ThemeMode;
   flowDirection: FlowDirection;
@@ -23,6 +24,7 @@ export function saveToLocalStorage(state: {
   variables: Map<string, Variable>;
   causalEdges: CausalEdge[];
   estimands: Estimand[];
+  models: StatisticalModel[];
   nodePositions: NodePositions;
   theme: ThemeMode;
   flowDirection: FlowDirection;
@@ -32,6 +34,7 @@ export function saveToLocalStorage(state: {
     variables: Array.from(state.variables.entries()),
     causalEdges: state.causalEdges,
     estimands: state.estimands,
+    models: state.models,
     nodePositions: state.nodePositions,
     theme: state.theme,
     flowDirection: state.flowDirection,

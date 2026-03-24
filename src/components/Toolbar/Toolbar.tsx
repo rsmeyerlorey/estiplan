@@ -59,13 +59,17 @@ export function Toolbar() {
   }, [clearAll]);
 
   const handleSave = useCallback(() => {
+    const planName = window.prompt('Name your estiplan:', 'my-estiplan');
+    if (!planName) return; // User cancelled
+
+    const sanitized = planName.trim().replace(/[^a-zA-Z0-9_\-\s]/g, '').replace(/\s+/g, '-') || 'estiplan';
     const state = getSerializableState();
     const json = JSON.stringify(state, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'estiplan.estiplan.json';
+    a.download = `${sanitized}.estiplan.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -107,6 +111,11 @@ export function Toolbar() {
   );
 
   const handleDuplicateVariant = useCallback(() => {
+    const planName = window.prompt('Save current estiplan as:', 'estiplan-original');
+    if (!planName) return; // User cancelled
+
+    const sanitized = planName.trim().replace(/[^a-zA-Z0-9_\-\s]/g, '').replace(/\s+/g, '-') || 'estiplan-original';
+
     // Export current state first
     const state = getSerializableState();
     const json = JSON.stringify(state, null, 2);
@@ -114,7 +123,7 @@ export function Toolbar() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'estiplan-original.estiplan.json';
+    a.download = `${sanitized}.estiplan.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

@@ -14,6 +14,7 @@ import '@xyflow/react/dist/style.css';
 
 import { VariableNode } from '../Nodes/VariableNode';
 import { EstimandCard } from '../Nodes/EstimandCard';
+import { ModelCard } from '../Nodes/ModelCard';
 import { CausalArrow } from '../Edges/CausalArrow';
 import { VariableContextMenu } from '../ContextMenu/VariableContextMenu';
 import { EdgeContextMenu } from '../ContextMenu/EdgeContextMenu';
@@ -26,6 +27,7 @@ import styles from './EstiplanCanvas.module.css';
 const nodeTypes = {
   variable: VariableNode,
   estimandCard: EstimandCard,
+  modelCard: ModelCard,
 };
 
 const edgeTypes = {
@@ -50,8 +52,10 @@ export function EstiplanCanvas() {
   const variables = useEstiplanStore((s) => s.variables);
   const causalEdges = useEstiplanStore((s) => s.causalEdges);
   const estimands = useEstiplanStore((s) => s.estimands);
+  const models = useEstiplanStore((s) => s.models);
   const nodePositions = useEstiplanStore((s) => s.nodePositions);
   const highlightedPaths = useEstiplanStore((s) => s.highlightedPaths);
+  const highlightedModelId = useEstiplanStore((s) => s.highlightedModelId);
   const setNodePosition = useEstiplanStore((s) => s.setNodePosition);
   const addCausalEdge = useEstiplanStore((s) => s.addCausalEdge);
   const theme = useEstiplanStore((s) => s.theme);
@@ -98,8 +102,25 @@ export function EstiplanCanvas() {
       });
     });
 
+    models.forEach((model) => {
+      const estimandPos = nodePositions[model.estimandId] || {
+        x: 400,
+        y: 300,
+      };
+      const modelPos = nodePositions[model.id] || {
+        x: estimandPos.x,
+        y: estimandPos.y + 160,
+      };
+      nodes.push({
+        id: model.id,
+        type: 'modelCard',
+        position: modelPos,
+        data: { ...model },
+      });
+    });
+
     return nodes;
-  }, [variables, estimands, nodePositions]);
+  }, [variables, estimands, models, nodePositions]);
 
   // Derive React Flow edges from store state
   const rfEdges = useMemo(() => {
@@ -114,7 +135,7 @@ export function EstiplanCanvas() {
       }
     }
 
-    return causalEdges.map((edge) => {
+    const edges: Edge[] = causalEdges.map((edge) => {
       const pairKey = `${edge.source}->${edge.target}`;
       const isHighlighted = highlightedEdgePairs.has(pairKey);
       const isDimmed = hasHighlighting && !isHighlighted;
@@ -124,8 +145,6 @@ export function EstiplanCanvas() {
         source: edge.source,
         target: edge.target,
         type: 'causalArrow',
-        // In TB mode: source from bottom, target to top
-        // In LR mode: source from right, target to left
         sourceHandle: null,
         targetHandle: null,
         data: {
@@ -136,7 +155,52 @@ export function EstiplanCanvas() {
         animated: isHighlighted,
       };
     });
-  }, [causalEdges, highlightedPaths]);
+
+    // Add dashed connector edges on model card hover
+    if (highlightedModelId) {
+      const hoveredModel = models.find((m) => m.id === highlightedModelId);
+      if (hoveredModel) {
+        const dashedStyle = {
+          strokeDasharray: '6 3',
+          stroke: '#ffb347',
+          strokeWidth: 1.5,
+          opacity: 0.6,
+        };
+
+        // Dashed line from estimand card → model card
+        edges.push({
+          id: `connector-est-${hoveredModel.estimandId}-${hoveredModel.id}`,
+          source: hoveredModel.estimandId,
+          target: hoveredModel.id,
+          type: 'default',
+          style: dashedStyle,
+          animated: false,
+        });
+
+        // Dashed line from treatment variable → model card
+        edges.push({
+          id: `connector-src-${hoveredModel.sourceId}-${hoveredModel.id}`,
+          source: hoveredModel.sourceId,
+          target: hoveredModel.id,
+          type: 'default',
+          style: dashedStyle,
+          animated: false,
+        });
+
+        // Dashed line from outcome variable → model card
+        edges.push({
+          id: `connector-tgt-${hoveredModel.targetId}-${hoveredModel.id}`,
+          source: hoveredModel.targetId,
+          target: hoveredModel.id,
+          type: 'default',
+          style: dashedStyle,
+          animated: false,
+        });
+      }
+    }
+
+    return edges;
+  }, [causalEdges, highlightedPaths, estimands, models, highlightedModelId]);
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -239,16 +303,14 @@ export function EstiplanCanvas() {
         deleteKeyCode="Delete"
         proOptions={{ hideAttribution: true }}
       >
-        <Background
-          variant={
-            theme === 'whiteboard'
-              ? BackgroundVariant.Dots
-              : BackgroundVariant.Lines
-          }
-          color="var(--estiplan-bg-pattern)"
-          gap={20}
-          size={theme === 'whiteboard' ? 1 : 0.5}
-        />
+        {theme === 'whiteboard' && (
+          <Background
+            variant={BackgroundVariant.Dots}
+            color="var(--estiplan-bg-pattern)"
+            gap={20}
+            size={1}
+          />
+        )}
         <Controls />
       </ReactFlow>
 

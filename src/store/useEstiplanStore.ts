@@ -63,6 +63,7 @@ export const useEstiplanStore = create<EstiplanStore>()(
         variables: Array.from(s.variables.entries()),
         causalEdges: s.causalEdges,
         estimands: s.estimands,
+        models: s.models,
         nodePositions: s.nodePositions,
       };
     }
@@ -72,8 +73,10 @@ export const useEstiplanStore = create<EstiplanStore>()(
         variables: new Map(snapshot.variables),
         causalEdges: snapshot.causalEdges,
         estimands: snapshot.estimands,
+        models: snapshot.models,
         nodePositions: snapshot.nodePositions,
         highlightedEstimandId: null,
+        highlightedModelId: null,
         highlightedPaths: null,
       });
     }
@@ -126,6 +129,25 @@ export const useEstiplanStore = create<EstiplanStore>()(
             type: 'estimandCard',
             position: cardPos,
             data: { ...estimand },
+          });
+        });
+
+        // Model cards positioned below/right of their estimand card
+        state.models.forEach((model) => {
+          const estimandPos = state.nodePositions[model.estimandId] || {
+            x: 400,
+            y: 300,
+          };
+          const modelPos = state.nodePositions[model.id] || {
+            x: estimandPos.x,
+            y: estimandPos.y + 160,
+          };
+
+          nodes.push({
+            id: model.id,
+            type: 'modelCard',
+            position: modelPos,
+            data: { ...model },
           });
         });
 
@@ -208,6 +230,7 @@ export const useEstiplanStore = create<EstiplanStore>()(
           variables: new Map(),
           causalEdges: [],
           estimands: [],
+          models: [],
           nodePositions: {},
           highlightedEstimandId: null,
           highlightedPaths: null,
@@ -220,6 +243,7 @@ export const useEstiplanStore = create<EstiplanStore>()(
           variables: new Map(savedState.variables),
           causalEdges: savedState.causalEdges,
           estimands: savedState.estimands,
+          models: savedState.models || [],
           nodePositions: savedState.nodePositions,
           theme: savedState.theme,
           flowDirection: savedState.flowDirection,
@@ -235,6 +259,7 @@ export const useEstiplanStore = create<EstiplanStore>()(
           variables: Array.from(s.variables.entries()),
           causalEdges: s.causalEdges,
           estimands: s.estimands,
+          models: s.models,
           nodePositions: s.nodePositions,
           theme: s.theme,
           flowDirection: s.flowDirection,
@@ -274,6 +299,7 @@ export const useEstiplanStore = create<EstiplanStore>()(
       store.variables = new Map(saved.variables);
       store.causalEdges = saved.causalEdges;
       store.estimands = saved.estimands;
+      store.models = saved.models || [];
       store.theme = saved.theme;
       store.flowDirection = saved.flowDirection;
     }
@@ -290,6 +316,7 @@ useEstiplanStore.subscribe(
     variables: state.variables,
     causalEdges: state.causalEdges,
     estimands: state.estimands,
+    models: state.models,
     nodePositions: state.nodePositions,
     theme: state.theme,
     flowDirection: state.flowDirection,
@@ -300,11 +327,10 @@ useEstiplanStore.subscribe(
       saveToLocalStorage(slice);
     }, 500);
   },
-  { equalityFn: () => false }, // always trigger (we debounce anyway)
+  { equalityFn: () => false },
 );
 
-// History snapshot: push snapshots when state changes (debounced to avoid
-// capturing every pixel of node dragging)
+// History snapshot
 let historyTimeout: ReturnType<typeof setTimeout> | null = null;
 
 useEstiplanStore.subscribe(
@@ -312,6 +338,7 @@ useEstiplanStore.subscribe(
     variables: state.variables,
     causalEdges: state.causalEdges,
     estimands: state.estimands,
+    models: state.models,
     nodePositions: state.nodePositions,
   }),
   () => {
@@ -323,6 +350,7 @@ useEstiplanStore.subscribe(
         variables: Array.from(s.variables.entries()),
         causalEdges: s.causalEdges,
         estimands: s.estimands,
+        models: s.models,
         nodePositions: s.nodePositions,
       });
     }, 800);

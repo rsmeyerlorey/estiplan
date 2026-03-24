@@ -6,6 +6,8 @@
   border-radius: 6px;
   padding: 4px 0;
   min-width: 180px;
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
   font-family: var(--estiplan-font);
 }
@@ -76,5 +78,57 @@
   gap: 8px;
   font-size: 13px;
   color: var(--estiplan-menu-text);
+  font-family: var(--estiplan-font);
+}
+
+.typeGroup {
+  /* Visual grouping for variable type categories */
+}
+
+.typeGroup + .typeGroup {
+  border-top: 1px solid var(--estiplan-menu-border);
+  margin-top: 2px;
+  padding-top: 2px;
+}
+
+.typeGroupLabel {
+  padding: 4px 14px 2px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--estiplan-node-subtext);
+  font-family: var(--estiplan-font);
+  opacity: 0.6;
+}
+
+.confoundHint {
+  font-size: 11px;
+  opacity: 0.7;
+  color: #e6a817;
+}
+
+.confoundExplainer {
+  padding: 6px 14px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--estiplan-node-subtext);
+  font-family: var(--estiplan-font);
+  font-style: italic;
+}
+
+.confoundTag {
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(230, 168, 23, 0.2);
+  color: #e6a817;
+  margin-left: auto;
+  font-family: var(--estiplan-font);
+}
+
+.confoundWarning {
+  padding: 6px 14px;
+  font-size: 11px;
+  color: #e6a817;
   font-family: var(--estiplan-font);
 }

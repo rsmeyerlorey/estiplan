@@ -1,35 +1,31 @@
 .chalkboard {
-  --estiplan-bg: #2d4a3e;
-  --estiplan-bg-pattern: #3a5c4e;
-  --estiplan-node-bg: rgba(255, 255, 255, 0.04);
-  --estiplan-node-border: #e8e8d8;
-  --estiplan-node-text: #f0f0e8;
-  --estiplan-node-subtext: #b8c8b8;
-  --estiplan-edge-color: #d4d4c8;
+  --estiplan-bg: #1a1a1a;
+  --estiplan-bg-pattern: transparent;
+  --estiplan-node-bg: rgba(255, 255, 255, 0.06);
+  --estiplan-node-border: #9a9a9a;
+  --estiplan-node-text: #e8e8e8;
+  --estiplan-node-subtext: #999;
+  --estiplan-edge-color: #aaa;
   --estiplan-edge-highlight: #ffb347;
-  --estiplan-edge-dim: #5a7a6a;
-  --estiplan-card-bg: rgba(255, 255, 255, 0.08);
-  --estiplan-card-border: rgba(255, 255, 255, 0.2);
-  --estiplan-card-text: #f0f0e8;
-  --estiplan-menu-bg: #1e3a2e;
-  --estiplan-menu-border: #3a5c4e;
-  --estiplan-menu-text: #e8e8d8;
-  --estiplan-menu-hover: #2d4a3e;
-  --estiplan-toolbar-bg: #1e3a2e;
-  --estiplan-toolbar-border: #3a5c4e;
-  --estiplan-toolbar-text: #e8e8d8;
-  --estiplan-btn-bg: #2d4a3e;
-  --estiplan-btn-hover: #3a5c4e;
-  --estiplan-btn-text: #e8e8d8;
-  --estiplan-btn-border: #4a6c5e;
-  --estiplan-font: 'Caveat', 'Comic Sans MS', cursive;
-  --estiplan-node-shadow: 0 0 6px rgba(255, 255, 255, 0.08);
-  --estiplan-handle-color: #d4d4c8;
-  --estiplan-type-badge-bg: rgba(255, 255, 255, 0.1);
-  --estiplan-type-badge-text: #b8c8b8;
-  --estiplan-code-bg: rgba(0, 0, 0, 0.25);
-}
-
-.chalkboard * {
-  text-shadow: 0 0 2px rgba(255, 255, 255, 0.1);
+  --estiplan-edge-dim: #444;
+  --estiplan-card-bg: #242424;
+  --estiplan-card-border: #444;
+  --estiplan-card-text: #e0e0e0;
+  --estiplan-menu-bg: #1e1e1e;
+  --estiplan-menu-border: #3a3a3a;
+  --estiplan-menu-text: #ddd;
+  --estiplan-menu-hover: #2a2a2a;
+  --estiplan-toolbar-bg: #111;
+  --estiplan-toolbar-border: #333;
+  --estiplan-toolbar-text: #ddd;
+  --estiplan-btn-bg: #2a2a2a;
+  --estiplan-btn-hover: #3a3a3a;
+  --estiplan-btn-text: #ddd;
+  --estiplan-btn-border: #4a4a4a;
+  --estiplan-font: 'Nunito', 'Inter', sans-serif;
+  --estiplan-node-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --estiplan-handle-color: #aaa;
+  --estiplan-type-badge-bg: rgba(255, 255, 255, 0.08);
+  --estiplan-type-badge-text: #999;
+  --estiplan-code-bg: rgba(0, 0, 0, 0.35);
 }

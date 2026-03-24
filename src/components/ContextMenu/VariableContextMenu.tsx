@@ -1,7 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { ContextMenu } from './ContextMenu';
 import { useEstiplanStore } from '../../store/useEstiplanStore';
-import { VARIABLE_TYPE_LABELS, type VariableType } from '../../types/dag';
+import {
+  VARIABLE_TYPE_LABELS,
+  VARIABLE_TYPE_GROUPS,
+  type VariableType,
+} from '../../types/dag';
 import { EstimandSubMenu } from './EstimandSubMenu';
 import styles from './ContextMenu.module.css';
 
@@ -120,26 +124,31 @@ export function VariableContextMenu({ nodeId, x, y, onClose }: Props) {
   }
 
   if (view === 'setType') {
-    const types = Object.entries(VARIABLE_TYPE_LABELS) as [
-      VariableType,
-      string,
-    ][];
     return (
       <ContextMenu x={x} y={y} onClose={onClose}>
         <div className={styles.subMenuLabel}>Set Variable Type</div>
-        {types.map(([type, label]) => (
-          <button
-            key={type}
-            className={styles.menuItem}
-            onClick={() => {
-              setVariableType(nodeId, type);
-              onClose();
-            }}
-          >
-            {variable.variableType === type ? '\u2713 ' : '  '}
-            {label}
-          </button>
+        {VARIABLE_TYPE_GROUPS.map((group) => (
+          <div key={group.label} className={styles.typeGroup}>
+            <div className={styles.typeGroupLabel}>{group.label}</div>
+            {group.types.map(({ type, label }) => (
+              <button
+                key={type}
+                className={styles.menuItem}
+                onClick={() => {
+                  setVariableType(nodeId, type);
+                  onClose();
+                }}
+              >
+                {variable.variableType === type ? '\u2713 ' : '  '}
+                {label}
+              </button>
+            ))}
+          </div>
         ))}
+        <div className={styles.separator} />
+        <button className={styles.menuItem} onClick={() => setView('main')}>
+          &larr; Back
+        </button>
       </ContextMenu>
     );
   }

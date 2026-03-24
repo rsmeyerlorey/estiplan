@@ -1,0 +1,320 @@
+.modelCard {
+  background: var(--estiplan-card-bg);
+  border: 1px solid var(--estiplan-card-border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  min-width: 220px;
+  max-width: none;
+  width: 360px;
+  font-family: var(--estiplan-font);
+  box-shadow: var(--estiplan-node-shadow);
+  position: relative;
+  overflow: visible;
+}
+
+/* ── Close button ── */
+
+.closeButton {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  background: none;
+  border: none;
+  color: var(--estiplan-card-text);
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0.5;
+  line-height: 1;
+  padding: 2px;
+}
+
+.closeButton:hover {
+  opacity: 1;
+}
+
+/* ── Header ── */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.headerBadge {
+  display: inline-block;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #5b8af5;
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+/* ── Adjustment set ── */
+
+.adjustmentSection {
+  margin-bottom: 8px;
+}
+
+.adjustmentItem {
+  font-size: 10px;
+  color: var(--estiplan-card-text);
+  padding: 2px 0 2px 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+.adjustmentName {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.adjustmentReason {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.reasonTag {
+  display: inline-block;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 0 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.reasonTagFork {
+  composes: reasonTag;
+  background: rgba(255, 179, 71, 0.2);
+  color: #e6a817;
+}
+
+.reasonTagPipe {
+  composes: reasonTag;
+  background: rgba(91, 138, 245, 0.2);
+  color: #5b8af5;
+}
+
+.reasonTagCollider {
+  composes: reasonTag;
+  background: rgba(245, 91, 91, 0.2);
+  color: #f55b5b;
+}
+
+/* ── Bad controls / warnings ── */
+
+.warningSection {
+  margin-bottom: 8px;
+}
+
+.warningItem {
+  font-size: 10px;
+  color: #e6a817;
+  padding: 2px 0 2px 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  line-height: 1.4;
+}
+
+.warningIcon {
+  flex-shrink: 0;
+}
+
+.warningText {
+  opacity: 0.85;
+}
+
+/* ── Identifiability note ── */
+
+.identNote {
+  font-size: 10px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.identOk {
+  composes: identNote;
+  background: rgba(76, 175, 80, 0.1);
+  color: #4caf50;
+}
+
+.identWarn {
+  composes: identNote;
+  background: rgba(245, 91, 91, 0.1);
+  color: #f55b5b;
+}
+
+/* ── Divider ── */
+
+.divider {
+  height: 1px;
+  background: var(--estiplan-card-border);
+  margin: 10px 0;
+}
+
+/* ── Section labels ── */
+
+.sectionLabel {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--estiplan-card-text);
+  opacity: 0.5;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Math block ── */
+
+.mathBlock {
+  margin-bottom: 10px;
+}
+
+.mathLine {
+  font-size: 13px;
+  font-family: 'Cambria Math', 'Latin Modern Math', Georgia, serif;
+  color: var(--estiplan-card-text);
+  line-height: 1.6;
+  padding-left: 8px;
+}
+
+/* ── Code block ── */
+
+.codeBlock {
+  font-size: 11px;
+  font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+  color: var(--estiplan-card-text);
+  background: var(--estiplan-code-bg, rgba(0, 0, 0, 0.06));
+  border-radius: 4px;
+  padding: 8px 10px;
+  margin: 0 0 8px 0;
+  overflow-x: auto;
+  line-height: 1.5;
+  white-space: pre;
+}
+
+/* ── Copy button ── */
+
+.copyButton {
+  background: none;
+  border: none;
+  color: var(--estiplan-card-text);
+  cursor: pointer;
+  font-size: 12px;
+  opacity: 0.4;
+  padding: 0 2px;
+  line-height: 1;
+}
+
+.copyButton:hover {
+  opacity: 1;
+}
+
+/* ── Interaction toggle ── */
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  margin-bottom: 6px;
+}
+
+.toggleRow input[type='checkbox'] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.toggleLabel {
+  font-size: 10px;
+  color: var(--estiplan-card-text);
+  opacity: 0.7;
+}
+
+/* ── Table Two Fallacy note ── */
+
+.tableTwoNote {
+  font-size: 9px;
+  color: var(--estiplan-card-text);
+  opacity: 0.45;
+  font-style: italic;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+/* ── Info button & popup ── */
+
+.infoRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.infoButton {
+  background: none;
+  border: none;
+  color: var(--estiplan-card-text);
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.35;
+  padding: 0;
+  line-height: 1;
+}
+
+.infoButton:hover {
+  opacity: 0.8;
+}
+
+.infoPopup {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  background: var(--estiplan-menu-bg);
+  border: 1px solid var(--estiplan-card-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 10px;
+  color: var(--estiplan-card-text);
+  line-height: 1.4;
+  width: 260px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  z-index: 50;
+}
+
+/* ── Resize handle ── */
+
+.resizeHandle {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 16px;
+  height: 16px;
+  cursor: se-resize;
+  opacity: 0.3;
+  z-index: 10;
+}
+
+.resizeHandle:hover {
+  opacity: 0.7;
+}
+
+.resizeHandle::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--estiplan-card-text);
+  border-bottom: 2px solid var(--estiplan-card-text);
+}

@@ -1,5 +1,5 @@
 import type { Variable } from '../types/dag';
-import type { Estimand } from '../types/dag';
+import type { Estimand, StatisticalModel } from '../types/dag';
 import type { CausalEdge } from './slices/edgeSlice';
 import type { NodePositions } from './useEstiplanStore';
 
@@ -7,6 +7,7 @@ export interface HistorySnapshot {
   variables: [string, Variable][];
   causalEdges: CausalEdge[];
   estimands: Estimand[];
+  models: StatisticalModel[];
   nodePositions: NodePositions;
 }
 

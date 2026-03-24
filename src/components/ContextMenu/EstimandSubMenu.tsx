@@ -7,22 +7,13 @@ import type { EstimandKind } from '../../types/dag';
 import styles from './ContextMenu.module.css';
 
 /**
- * EstimandSubMenu supports two directions:
- *
- * "forward" (default): User right-clicked a SOURCE variable.
- *   Flow: "Effect of {source} on..." → pick target → pick kind → declare
- *
- * "reverse": User right-clicked a TARGET variable.
- *   Flow: "What affects {target}?" → pick source → pick kind → declare
- *
- * In both cases, the declared estimand always has the correct
- * source (cause) and target (effect) orientation.
+ * EstimandSubMenu — declares the causal question (estimand).
+ * The backdoor analysis and model generation happen later,
+ * on the EstimandCard itself via the "Generate Model" button.
  */
 
 interface Props {
-  /** The variable the user right-clicked */
   anchorId: string;
-  /** Which direction the user chose */
   direction: 'forward' | 'reverse';
   x: number;
   y: number;
@@ -52,7 +43,6 @@ export function EstimandSubMenu({
 
   const anchor = variables.get(anchorId);
 
-  // Determine source and target based on direction
   const sourceId = direction === 'forward' ? anchorId : otherId;
   const targetId = direction === 'forward' ? otherId : anchorId;
 
@@ -61,12 +51,9 @@ export function EstimandSubMenu({
     [variables, anchorId],
   );
 
-  // For reverse direction, we need to find which variables have paths TO the anchor
-  // Build reverse adjacency to find potential causes
   const reachableSources = useMemo(() => {
     if (direction !== 'reverse') return null;
     const adj = buildAdjacency(causalEdges);
-    // Check which other variables have at least one path to anchorId
     return otherVariables.filter((v) => {
       const paths = findAllPaths(adj, v.id, anchorId);
       return paths.length > 0;
@@ -88,9 +75,19 @@ export function EstimandSubMenu({
 
   if (!anchor) return null;
 
-  const handleDeclare = (kind: EstimandKind, excluded: string[] = []) => {
+  const handleDeclare = (
+    kind: EstimandKind,
+    excluded: string[] = [],
+  ) => {
     if (!sourceId || !targetId) return;
-    declareEstimand(sourceId, targetId, kind, excluded, variables, causalEdges);
+    declareEstimand(
+      sourceId,
+      targetId,
+      kind,
+      excluded,
+      variables,
+      causalEdges,
+    );
     onClose();
   };
 
@@ -101,8 +98,6 @@ export function EstimandSubMenu({
         ? `Effect of ${anchor.name} on\u2026`
         : `What affects ${anchor.name}?`;
 
-    // In reverse mode, show variables that have paths to anchor
-    // plus all others (but with a visual hint)
     const candidates =
       direction === 'reverse' && reachableSources
         ? otherVariables.map((v) => ({
