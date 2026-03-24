@@ -81,16 +81,33 @@ npx vite build     # production build
 - Repo: local only (no remote yet)
 - User: Robin <robinmeyerlorey@gmail.com>
 
-## Roadmap (McElreath's full workflow)
-1. ✅ DAG builder (variables, causal arrows, layout)
-2. ✅ Estimand declaration with do-calculus notation
-3. ✅ Statistical model generation (brms code + math notation)
-4. ✅ Auto-save/load persistence (localStorage)
-5. ⬜ Clear/New + Export/Import JSON files
-6. ⬜ Undo/Redo
-7. ⬜ Edge validation (prevent self-loops, duplicates)
-8. ⬜ Conditioning set suggestions (backdoor criterion / d-separation)
-9. ⬜ Prior specification UI
-10. ⬜ Full R script export
-11. ⬜ Synthetic data simulation & testing loop
-12. ⬜ Multiple generative models comparison
+## Development Workflow
+Lecture-driven development: watch McElreath's Statistical Rethinking 2026 lectures, paste transcripts, add features as new concepts are introduced. Each lecture is a natural test case.
+
+## Completed Features
+1. ✅ DAG builder (variables, causal arrows, layout, TB/LR toggle)
+2. ✅ Estimand declaration with do-calculus notation (bidirectional)
+3. ✅ Statistical model generation (brms code + math notation + interaction toggle)
+4. ✅ Auto-save/load persistence (localStorage, debounced)
+5. ✅ Save/Load .estiplan.json files with validation
+6. ✅ Undo/Redo (50-snapshot history, Ctrl+Z/Y, debounced drag handling)
+7. ✅ Edge validation (self-loops, duplicates, cycle detection)
+8. ✅ New/Clear with confirm dialog
+9. ✅ Duplicate as variant (export + clear estimands)
+10. ✅ Edge annotations with hoverable square handle + inline editing
+11. ✅ Whiteboard/chalkboard themes
+
+## Architecture Notes
+- `history.ts` — HistoryManager class with pause/resume to prevent recursive snapshots during undo/redo apply
+- `wouldCreateCycle()` in pathfinding.ts — BFS from target to check reachability of source before adding edge
+- Keyboard shortcuts registered in App.tsx useEffect, excludes input fields
+- Toolbar uses visual separator divs for button grouping
+
+## Roadmap (Lecture-Driven)
+- ⬜ A06: Conditioning set suggestions (backdoor criterion / d-separation)
+- ⬜ Prior specification UI
+- ⬜ Full R script export
+- ⬜ Synthetic data simulation & testing loop
+- ⬜ Multiple generative models comparison
+- ⬜ Multilevel models (varying effects syntax in brms)
+- ⬜ Multivariate models (bf() syntax in brms)
