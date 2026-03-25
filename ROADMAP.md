@@ -4,9 +4,9 @@ Organized by priority. Tier 1 is pre-launch; Tiers 2-4 are lecture-driven and on
 
 ---
 
-## Tier 1 — Pre-launch polish
+## Tier 1 — Pre-launch polish ✅
 
-Before making the repo public or sharing broadly.
+Completed. Before making the repo public or sharing broadly.
 
 ### 1.1 Automated test suite for DAG engine
 - Load each `test-dags/*.estiplan.json` programmatically
