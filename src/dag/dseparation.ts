@@ -283,6 +283,42 @@ export function isCausalPath(path: UndirectedPath): boolean {
   return path.edges.every((e) => e.forward);
 }
 
+// ── Minimal Set Enumeration ──
+
+/** Generate all combinations of `size` elements from `arr`. */
+function* combinations<T>(arr: T[], size: number): Generator<T[]> {
+  if (size === 0) { yield []; return; }
+  if (size > arr.length) return;
+  if (size === arr.length) { yield [...arr]; return; }
+
+  for (let i = 0; i <= arr.length - size; i++) {
+    for (const rest of combinations(arr.slice(i + 1), size - 1)) {
+      yield [arr[i], ...rest];
+    }
+  }
+}
+
+/**
+ * Find the smallest subset of candidates that blocks all backdoor paths.
+ * Enumerates subsets by increasing size (0, 1, 2, ...).
+ */
+function findMinimalBlockingSet(
+  candidates: string[],
+  backdoorPaths: UndirectedPath[],
+  forwardAdj: Map<string, Set<string>>,
+): Set<string> {
+  for (let size = 0; size <= candidates.length; size++) {
+    for (const subset of combinations(candidates, size)) {
+      const condSet = new Set(subset);
+      if (backdoorPaths.every((p) => isPathBlocked(p, condSet, forwardAdj))) {
+        return condSet;
+      }
+    }
+  }
+  // Shouldn't reach here if full candidate set works
+  return new Set(candidates);
+}
+
 // ── Backdoor Criterion ──
 
 /**
@@ -307,6 +343,14 @@ export function findBackdoorAdjustmentSet(
 
   const causalPaths = allPaths.filter((p) => isCausalPath(p));
   const backdoorPaths = allPaths.filter((p) => isBackdoorPath(p, treatmentId));
+  // Non-standard paths: start forward then reverse (e.g., X -> A <- B -> Y).
+  // These always contain a collider so they're blocked by default, but we must
+  // verify the adjustment set doesn't accidentally open them.
+  const nonStandardPaths = allPaths.filter(
+    (p) => !isCausalPath(p) && !isBackdoorPath(p, treatmentId),
+  );
+  // All non-causal paths that must be blocked (backdoor + non-standard)
+  const pathsToBlock = [...backdoorPaths, ...nonStandardPaths];
 
   // Descendants of treatment — cannot be in adjustment set
   const treatmentDescendants = findDescendants(treatmentId, forwardAdj);
@@ -336,8 +380,9 @@ export function findBackdoorAdjustmentSet(
     }
   }
 
-  // Strategy: try to find a minimal adjustment set
-  // Start with non-collider, non-descendant, non-unobserved nodes on backdoor paths
+  // Strategy: find the MINIMAL adjustment set.
+  // Collect eligible candidates, then enumerate subsets by increasing size.
+  // The first subset that blocks all backdoor paths is the smallest valid set.
   const candidates = new Set<string>();
   for (const nodeId of backdoorNodes) {
     if (
@@ -349,94 +394,48 @@ export function findBackdoorAdjustmentSet(
     }
   }
 
-  // Iteratively build adjustment set
-  // Start with all candidates, then try to find which are actually needed
-  const adjustmentSet = new Set<string>();
+  const candidateArr = [...candidates];
+
+  // Find the smallest subset of candidates that blocks all non-causal paths
+  // (both backdoor and non-standard). isPathBlocked handles collider-opening
+  // correctly: if conditioning opens a collider, the path is reported as
+  // unblocked, so the subset is rejected.
+  // Cap at 15 candidates to avoid combinatorial explosion; fall back to full set.
+  let adjustmentSet: Set<string>;
+  if (candidateArr.length <= 15 && pathsToBlock.length > 0) {
+    adjustmentSet = findMinimalBlockingSet(candidateArr, pathsToBlock, forwardAdj);
+  } else if (pathsToBlock.length === 0) {
+    adjustmentSet = new Set();
+  } else {
+    adjustmentSet = candidates; // fallback for very large DAGs
+  }
+
+  // Assign reasons: check each variable's role on backdoor paths
   const reasons: AdjustmentReason[] = [];
-
-  // First pass: check which candidates are needed
-  for (const candidate of candidates) {
-    // Check if any backdoor path passes through this node as a fork or pipe
-    let needed = false;
-    let reasonType: AdjustmentReason['reason'] = 'fork';
-
+  for (const nodeId of adjustmentSet) {
+    let reasonType: AdjustmentReason['reason'] = 'pipe-backdoor';
     for (const path of backdoorPaths) {
-      const idx = path.nodes.indexOf(candidate);
+      const idx = path.nodes.indexOf(nodeId);
       if (idx <= 0 || idx >= path.nodes.length - 1) continue;
-
       const a = path.nodes[idx - 1];
       const c = path.nodes[idx + 1];
-      const tripleType = classifyTriple(forwardAdj, a, candidate, c);
-
-      if (tripleType === 'fork') {
-        needed = true;
+      if (classifyTriple(forwardAdj, a, nodeId, c) === 'fork') {
         reasonType = 'fork';
         break;
-      } else if (tripleType === 'pipe') {
-        needed = true;
-        reasonType = 'pipe-backdoor';
-        break;
       }
     }
-
-    if (needed) {
-      adjustmentSet.add(candidate);
-      reasons.push({
-        variableId: candidate,
-        reason: reasonType,
-        explanation:
-          reasonType === 'fork'
-            ? 'Common cause — blocks fork confound on backdoor path'
-            : 'Blocks non-causal association on backdoor path',
-      });
-    }
+    reasons.push({
+      variableId: nodeId,
+      reason: reasonType,
+      explanation:
+        reasonType === 'fork'
+          ? 'Common cause — blocks fork confound on backdoor path'
+          : 'Blocks non-causal association on backdoor path',
+    });
   }
 
-  // Check if conditioning on the adjustment set opens any colliders
-  // If so, we need to also condition on something to block that opened path
-  let changed = true;
-  let iterations = 0;
-  while (changed && iterations < 10) {
-    changed = false;
-    iterations++;
-
-    for (const path of backdoorPaths) {
-      if (!isPathBlocked(path, adjustmentSet, forwardAdj)) {
-        // Path is still open — find a node to block it
-        for (let i = 1; i < path.nodes.length - 1; i++) {
-          const nodeId = path.nodes[i];
-          if (
-            adjustmentSet.has(nodeId) ||
-            treatmentDescendants.has(nodeId) ||
-            unobservedIds.has(nodeId) ||
-            nodeId === treatmentId ||
-            nodeId === outcomeId
-          ) {
-            continue;
-          }
-
-          const a = path.nodes[i - 1];
-          const c = path.nodes[i + 1];
-          const tt = classifyTriple(forwardAdj, a, nodeId, c);
-
-          if (tt !== 'collider') {
-            adjustmentSet.add(nodeId);
-            reasons.push({
-              variableId: nodeId,
-              reason: 'opened-collider',
-              explanation:
-                'Needed to block path opened by conditioning on a collider',
-            });
-            changed = true;
-            break;
-          }
-        }
-      }
-    }
-  }
-
-  // Verify: are all backdoor paths now blocked?
-  const identifiable = backdoorPaths.every((p) =>
+  // Verify: are all non-causal paths blocked (backdoor + non-standard)?
+  const identifiable = pathsToBlock.every((p) =>
     isPathBlocked(p, adjustmentSet, forwardAdj),
   );
 
