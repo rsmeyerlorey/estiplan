@@ -8,6 +8,7 @@
   font-family: var(--estiplan-font);
   box-shadow: var(--estiplan-node-shadow);
   position: relative;
+  overflow: visible;
 }
 
 /* ── Estimand header ── */
@@ -164,6 +165,7 @@
   background: rgba(255, 179, 71, 0.2);
   color: #e6a817;
   white-space: nowrap;
+  cursor: help;
 }
 
 .analysisTagBad {

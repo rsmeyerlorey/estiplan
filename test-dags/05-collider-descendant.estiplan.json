@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "variables": [
+    ["v_x", { "id": "v_x", "name": "Education", "shorthand": "X", "variableType": "continuous" }],
+    ["v_y", { "id": "v_y", "name": "Earnings", "shorthand": "Y", "variableType": "positive-continuous" }],
+    ["v_z", { "id": "v_z", "name": "Occupation", "shorthand": "Z", "variableType": "categorical" }],
+    ["v_d", { "id": "v_d", "name": "Job Title", "shorthand": "D", "variableType": "categorical" }]
+  ],
+  "causalEdges": [
+    { "id": "e_x_z", "source": "v_x", "target": "v_z", "data": {} },
+    { "id": "e_y_z", "source": "v_y", "target": "v_z", "data": {} },
+    { "id": "e_z_d", "source": "v_z", "target": "v_d", "data": {} }
+  ],
+  "estimands": [],
+  "models": [],
+  "nodePositions": {
+    "v_x": { "x": 100, "y": 50 },
+    "v_y": { "x": 500, "y": 50 },
+    "v_z": { "x": 300, "y": 200 },
+    "v_d": { "x": 300, "y": 370 }
+  },
+  "theme": "chalkboard",
+  "flowDirection": "TB"
+}

@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "variables": [
+    ["v_x", { "id": "v_x", "name": "Exercise", "shorthand": "X", "variableType": "continuous" }],
+    ["v_y", { "id": "v_y", "name": "Blood Pressure", "shorthand": "Y", "variableType": "continuous" }],
+    ["v_age", { "id": "v_age", "name": "Age", "shorthand": "A", "variableType": "continuous" }],
+    ["v_sex", { "id": "v_sex", "name": "Sex", "shorthand": "S", "variableType": "binary" }],
+    ["v_diet", { "id": "v_diet", "name": "Diet Quality", "shorthand": "D", "variableType": "ordinal" }]
+  ],
+  "causalEdges": [
+    { "id": "e_x_y", "source": "v_x", "target": "v_y", "data": {} },
+    { "id": "e_age_x", "source": "v_age", "target": "v_x", "data": {} },
+    { "id": "e_age_y", "source": "v_age", "target": "v_y", "data": {} },
+    { "id": "e_sex_x", "source": "v_sex", "target": "v_x", "data": {} },
+    { "id": "e_sex_y", "source": "v_sex", "target": "v_y", "data": {} },
+    { "id": "e_diet_x", "source": "v_diet", "target": "v_x", "data": {} },
+    { "id": "e_diet_y", "source": "v_diet", "target": "v_y", "data": {} }
+  ],
+  "estimands": [],
+  "models": [],
+  "nodePositions": {
+    "v_age": { "x": 100, "y": 50 },
+    "v_sex": { "x": 300, "y": 50 },
+    "v_diet": { "x": 500, "y": 50 },
+    "v_x": { "x": 200, "y": 280 },
+    "v_y": { "x": 450, "y": 280 }
+  },
+  "theme": "chalkboard",
+  "flowDirection": "TB"
+}

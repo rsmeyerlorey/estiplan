@@ -300,6 +300,7 @@ export function findBackdoorAdjustmentSet(
   treatmentId: string,
   outcomeId: string,
   mediatorIdsForDirect: string[] = [],
+  unobservedIds: Set<string> = new Set(),
 ): BackdoorResult {
   const forwardAdj = buildForwardAdj(edges);
   const allPaths = findAllUndirectedPaths(edges, treatmentId, outcomeId);
@@ -318,9 +319,13 @@ export function findBackdoorAdjustmentSet(
     }
   }
 
-  // Identify colliders on all paths
+  // Identify colliders on non-causal paths only.
+  // A node that is a collider on a causal path is really a mediator,
+  // not a "bad control collider" — the collider warning is only relevant
+  // for nodes whose conditioning would open a NON-causal path.
   const colliderNodes = new Set<string>();
-  for (const path of allPaths) {
+  const nonCausalPaths = allPaths.filter((p) => !isCausalPath(p));
+  for (const path of nonCausalPaths) {
     for (let i = 1; i < path.nodes.length - 1; i++) {
       const a = path.nodes[i - 1];
       const b = path.nodes[i];
@@ -332,10 +337,14 @@ export function findBackdoorAdjustmentSet(
   }
 
   // Strategy: try to find a minimal adjustment set
-  // Start with non-collider, non-descendant nodes on backdoor paths
+  // Start with non-collider, non-descendant, non-unobserved nodes on backdoor paths
   const candidates = new Set<string>();
   for (const nodeId of backdoorNodes) {
-    if (!treatmentDescendants.has(nodeId) && !colliderNodes.has(nodeId)) {
+    if (
+      !treatmentDescendants.has(nodeId) &&
+      !colliderNodes.has(nodeId) &&
+      !unobservedIds.has(nodeId)
+    ) {
       candidates.add(nodeId);
     }
   }
@@ -399,6 +408,7 @@ export function findBackdoorAdjustmentSet(
           if (
             adjustmentSet.has(nodeId) ||
             treatmentDescendants.has(nodeId) ||
+            unobservedIds.has(nodeId) ||
             nodeId === treatmentId ||
             nodeId === outcomeId
           ) {
@@ -432,23 +442,18 @@ export function findBackdoorAdjustmentSet(
 
   // Build bad control warnings
   const badControls: BadControlWarning[] = [];
+  const badControlSeen = new Set<string>();
 
-  // Colliders — warn not to condition on them
-  for (const collider of colliderNodes) {
-    if (collider !== treatmentId && collider !== outcomeId) {
-      badControls.push({
-        variableId: collider,
-        type: 'collider',
-        explanation:
-          'Collider — conditioning on this creates spurious association (bad control)',
-      });
-    }
-  }
+  // For direct effects, the excluded mediators are SUPPOSED to be
+  // conditioned on, so don't flag them as bad controls.
+  const directExclusions = new Set(mediatorIdsForDirect);
 
-  // Post-treatment / mediators for total effect
+  // Post-treatment / mediators for total effect (most informative, add first)
   for (const desc of treatmentDescendants) {
     if (desc === outcomeId) continue;
-    // Check if this descendant is on a causal path (mediator)
+    if (directExclusions.has(desc)) continue; // Wanted for direct effect
+    if (badControlSeen.has(desc)) continue;
+
     const isMediator = causalPaths.some(
       (p) => p.nodes.includes(desc) && p.nodes.indexOf(desc) > 0,
     );
@@ -466,6 +471,42 @@ export function findBackdoorAdjustmentSet(
         explanation:
           'Post-treatment variable — may introduce bias if conditioned on',
       });
+    }
+    badControlSeen.add(desc);
+  }
+
+  // Colliders — warn not to condition on them
+  // Skip nodes already covered by mediator/post-treatment warnings
+  for (const collider of colliderNodes) {
+    if (collider === treatmentId || collider === outcomeId) continue;
+    if (badControlSeen.has(collider)) continue;
+    if (directExclusions.has(collider)) continue;
+
+    badControls.push({
+      variableId: collider,
+      type: 'collider',
+      explanation:
+        'Collider — conditioning on this creates spurious association (bad control)',
+    });
+    badControlSeen.add(collider);
+  }
+
+  // Descendants of colliders — also bad controls
+  for (const collider of colliderNodes) {
+    const colliderDescendants = findDescendants(collider, forwardAdj);
+    for (const desc of colliderDescendants) {
+      if (desc === treatmentId || desc === outcomeId) continue;
+      if (badControlSeen.has(desc)) continue;
+      if (directExclusions.has(desc)) continue;
+      if (colliderNodes.has(desc)) continue; // Already handled as collider
+
+      badControls.push({
+        variableId: desc,
+        type: 'collider',
+        explanation:
+          'Descendant of collider — conditioning on this partially opens a non-causal path (bad control)',
+      });
+      badControlSeen.add(desc);
     }
   }
 

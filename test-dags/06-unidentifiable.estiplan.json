@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "variables": [
+    ["v_x", { "id": "v_x", "name": "Treatment", "shorthand": "X", "variableType": "continuous" }],
+    ["v_y", { "id": "v_y", "name": "Outcome", "shorthand": "Y", "variableType": "continuous" }],
+    ["v_u", { "id": "v_u", "name": "Unmeasured Confound", "shorthand": "U", "variableType": "unobserved" }]
+  ],
+  "causalEdges": [
+    { "id": "e_x_y", "source": "v_x", "target": "v_y", "data": {} },
+    { "id": "e_u_x", "source": "v_u", "target": "v_x", "data": {} },
+    { "id": "e_u_y", "source": "v_u", "target": "v_y", "data": {} }
+  ],
+  "estimands": [],
+  "models": [],
+  "nodePositions": {
+    "v_u": { "x": 300, "y": 50 },
+    "v_x": { "x": 150, "y": 250 },
+    "v_y": { "x": 450, "y": 250 }
+  },
+  "theme": "chalkboard",
+  "flowDirection": "TB"
+}

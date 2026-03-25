@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "variables": [
+    ["v_south", { "id": "v_south", "name": "South", "shorthand": "S", "variableType": "binary" }],
+    ["v_age", { "id": "v_age", "name": "Age at Marriage", "shorthand": "A", "variableType": "continuous" }],
+    ["v_marriage", { "id": "v_marriage", "name": "Marriage Rate", "shorthand": "M", "variableType": "continuous" }],
+    ["v_divorce", { "id": "v_divorce", "name": "Divorce Rate", "shorthand": "D", "variableType": "continuous" }]
+  ],
+  "causalEdges": [
+    { "id": "e_s_a", "source": "v_south", "target": "v_age", "data": {} },
+    { "id": "e_s_m", "source": "v_south", "target": "v_marriage", "data": {} },
+    { "id": "e_a_m", "source": "v_age", "target": "v_marriage", "data": {} },
+    { "id": "e_a_d", "source": "v_age", "target": "v_divorce", "data": {} },
+    { "id": "e_m_d", "source": "v_marriage", "target": "v_divorce", "data": {} }
+  ],
+  "estimands": [],
+  "models": [],
+  "nodePositions": {
+    "v_south": { "x": 300, "y": 50 },
+    "v_age": { "x": 150, "y": 200 },
+    "v_marriage": { "x": 450, "y": 200 },
+    "v_divorce": { "x": 300, "y": 350 }
+  },
+  "theme": "chalkboard",
+  "flowDirection": "TB"
+}

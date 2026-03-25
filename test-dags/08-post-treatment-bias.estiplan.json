@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "variables": [
+    ["v_x", { "id": "v_x", "name": "Fertilizer", "shorthand": "X", "variableType": "continuous" }],
+    ["v_m", { "id": "v_m", "name": "Plant Height", "shorthand": "M", "variableType": "positive-continuous" }],
+    ["v_y", { "id": "v_y", "name": "Fruit Yield", "shorthand": "Y", "variableType": "positive-continuous" }]
+  ],
+  "causalEdges": [
+    { "id": "e_x_m", "source": "v_x", "target": "v_m", "data": {} },
+    { "id": "e_m_y", "source": "v_m", "target": "v_y", "data": {} },
+    { "id": "e_x_y", "source": "v_x", "target": "v_y", "data": {} }
+  ],
+  "estimands": [],
+  "models": [],
+  "nodePositions": {
+    "v_x": { "x": 100, "y": 150 },
+    "v_m": { "x": 300, "y": 50 },
+    "v_y": { "x": 500, "y": 150 }
+  },
+  "theme": "chalkboard",
+  "flowDirection": "LR"
+}

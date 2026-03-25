@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "variables": [
+    ["v_x", { "id": "v_x", "name": "Treatment", "shorthand": "X", "variableType": "continuous" }],
+    ["v_gauss", { "id": "v_gauss", "name": "Weight", "shorthand": "W", "variableType": "continuous" }],
+    ["v_bern", { "id": "v_bern", "name": "Survived", "shorthand": "Sv", "variableType": "binary" }],
+    ["v_pois", { "id": "v_pois", "name": "Offspring Count", "shorthand": "N", "variableType": "count" }],
+    ["v_cat", { "id": "v_cat", "name": "Species", "shorthand": "Sp", "variableType": "categorical" }],
+    ["v_ord", { "id": "v_ord", "name": "Severity", "shorthand": "Sev", "variableType": "ordinal" }],
+    ["v_beta", { "id": "v_beta", "name": "Proportion Infected", "shorthand": "P", "variableType": "proportion" }],
+    ["v_logn", { "id": "v_logn", "name": "Income", "shorthand": "I", "variableType": "positive-continuous" }]
+  ],
+  "causalEdges": [
+    { "id": "e_x_gauss", "source": "v_x", "target": "v_gauss", "data": {} },
+    { "id": "e_x_bern", "source": "v_x", "target": "v_bern", "data": {} },
+    { "id": "e_x_pois", "source": "v_x", "target": "v_pois", "data": {} },
+    { "id": "e_x_cat", "source": "v_x", "target": "v_cat", "data": {} },
+    { "id": "e_x_ord", "source": "v_x", "target": "v_ord", "data": {} },
+    { "id": "e_x_beta", "source": "v_x", "target": "v_beta", "data": {} },
+    { "id": "e_x_logn", "source": "v_x", "target": "v_logn", "data": {} }
+  ],
+  "estimands": [],
+  "models": [],
+  "nodePositions": {
+    "v_x": { "x": 50, "y": 200 },
+    "v_gauss": { "x": 250, "y": 0 },
+    "v_bern": { "x": 250, "y": 70 },
+    "v_pois": { "x": 250, "y": 140 },
+    "v_cat": { "x": 250, "y": 210 },
+    "v_ord": { "x": 250, "y": 280 },
+    "v_beta": { "x": 250, "y": 350 },
+    "v_logn": { "x": 250, "y": 420 }
+  },
+  "theme": "chalkboard",
+  "flowDirection": "LR"
+}

@@ -2,6 +2,14 @@ import { memo, useState, useCallback, useRef } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { StatisticalModel } from '../../types/dag';
 import { useEstiplanStore } from '../../store/useEstiplanStore';
+import {
+  REASON_TOOLTIPS,
+  BAD_CONTROL_TOOLTIPS,
+  IDENTIFIABILITY_TOOLTIPS,
+  TABLE_TWO_TOOLTIP,
+  SECTION_TOOLTIPS,
+} from '../../dag/explanations';
+import { InfoTip } from './InfoTip';
 import styles from './ModelCard.module.css';
 
 /**
@@ -125,21 +133,27 @@ function ModelCardComponent({ id, data }: NodeProps) {
       {/* ── Identifiability ── */}
       {model.identifiable ? (
         model.adjustmentSet.length > 0 && (
-          <div className={styles.identOk}>
-            &#x2713; Causal effect is identifiable via backdoor adjustment
-          </div>
+          <InfoTip text={IDENTIFIABILITY_TOOLTIPS.identifiable} align="left">
+            <div className={styles.identOk}>
+              &#x2713; Causal effect is identifiable via backdoor adjustment
+            </div>
+          </InfoTip>
         )
       ) : (
-        <div className={styles.identWarn}>
-          &#x26A0; No sufficient adjustment set found &mdash; consider
-          additional assumptions or measurements
-        </div>
+        <InfoTip text={IDENTIFIABILITY_TOOLTIPS.notIdentifiable} align="left">
+          <div className={styles.identWarn}>
+            &#x26A0; No sufficient adjustment set found &mdash; consider
+            additional assumptions or measurements
+          </div>
+        </InfoTip>
       )}
 
       {/* ── Adjustment set (good controls) ── */}
       {model.adjustmentSet.length > 0 && (
         <div className={styles.adjustmentSection}>
-          <div className={styles.sectionLabel}>Conditioning on</div>
+          <InfoTip text={SECTION_TOOLTIPS.conditioningOn} align="left">
+            <div className={styles.sectionLabel}>Conditioning on</div>
+          </InfoTip>
           {model.adjustmentSet.map((entry) => {
             const v = variables.get(entry.variableId);
             if (!v) return null;
@@ -148,9 +162,11 @@ function ModelCardComponent({ id, data }: NodeProps) {
                 <span className={styles.adjustmentName}>
                   {v.name} ({v.shorthand})
                 </span>
-                <span className={getReasonTagClass(entry.reason)}>
-                  {getReasonLabel(entry.reason)}
-                </span>
+                <InfoTip text={REASON_TOOLTIPS[entry.reason] || ''}>
+                  <span className={getReasonTagClass(entry.reason)}>
+                    {getReasonLabel(entry.reason)}
+                  </span>
+                </InfoTip>
               </div>
             );
           })}
@@ -160,15 +176,26 @@ function ModelCardComponent({ id, data }: NodeProps) {
       {/* ── Bad controls (warnings) ── */}
       {model.badControls.length > 0 && (
         <div className={styles.warningSection}>
-          <div className={styles.sectionLabel}>Do not condition on</div>
+          <InfoTip text={SECTION_TOOLTIPS.doNotConditionOn} align="left">
+            <div className={styles.sectionLabel}>Do not condition on</div>
+          </InfoTip>
           {model.badControls.map((warning) => {
             const v = variables.get(warning.variableId);
             if (!v) return null;
+            const badTip = BAD_CONTROL_TOOLTIPS[warning.type] || warning.explanation;
             return (
               <div key={warning.variableId} className={styles.warningItem}>
-                <span className={styles.warningIcon}>&#x26A0;</span>
+                <InfoTip text={badTip}>
+                  <span className={styles.warningBadge}>
+                    {warning.type === 'collider'
+                      ? 'collider'
+                      : warning.type === 'mediator-total'
+                        ? 'mediator'
+                        : 'post-tx'}
+                  </span>
+                </InfoTip>
                 <span className={styles.warningText}>
-                  <strong>{v.name}</strong> &mdash; {warning.explanation}
+                  <strong>{v.name}</strong>
                 </span>
               </div>
             );
@@ -222,11 +249,13 @@ function ModelCardComponent({ id, data }: NodeProps) {
 
       {/* ── Table Two Fallacy note ── */}
       {model.conditionedOn.length > 0 && (
-        <div className={styles.tableTwoNote}>
-          Note: Only the coefficient for {treatmentName} is a causal effect.
-          Coefficients on adjustment variables are not causal estimates (Table
-          Two Fallacy).
-        </div>
+        <InfoTip text={TABLE_TWO_TOOLTIP} align="left">
+          <div className={styles.tableTwoNote}>
+            Note: Only the coefficient for {treatmentName} is a causal effect.
+            Coefficients on adjustment variables are not causal estimates (Table
+            Two Fallacy).
+          </div>
+        </InfoTip>
       )}
 
       {/* ── Info tooltip ── */}

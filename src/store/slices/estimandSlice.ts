@@ -164,11 +164,16 @@ export const createEstimandSlice: StateCreator<
     if (!source || !target) return;
 
     // Run backdoor criterion
+    const unobservedIds = new Set<string>();
+    variables.forEach((v) => {
+      if (v.variableType === 'unobserved') unobservedIds.add(v.id);
+    });
     const backdoorResult = findBackdoorAdjustmentSet(
       edges,
       estimand.sourceId,
       estimand.targetId,
       estimand.excludedMediators,
+      unobservedIds,
     );
 
     const conditionedOn = backdoorResult.adjustmentSet.map(

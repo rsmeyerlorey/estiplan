@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "variables": [
+    ["v_x", { "id": "v_x", "name": "Treatment", "shorthand": "X", "variableType": "continuous" }],
+    ["v_z", { "id": "v_z", "name": "Mediator", "shorthand": "Z", "variableType": "continuous" }],
+    ["v_y", { "id": "v_y", "name": "Outcome", "shorthand": "Y", "variableType": "continuous" }]
+  ],
+  "causalEdges": [
+    { "id": "e_x_z", "source": "v_x", "target": "v_z", "data": {} },
+    { "id": "e_z_y", "source": "v_z", "target": "v_y", "data": {} }
+  ],
+  "estimands": [],
+  "models": [],
+  "nodePositions": {
+    "v_x": { "x": 100, "y": 150 },
+    "v_z": { "x": 300, "y": 150 },
+    "v_y": { "x": 500, "y": 150 }
+  },
+  "theme": "chalkboard",
+  "flowDirection": "LR"
+}

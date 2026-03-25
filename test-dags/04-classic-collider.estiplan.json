@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "variables": [
+    ["v_x", { "id": "v_x", "name": "Talent", "shorthand": "X", "variableType": "continuous" }],
+    ["v_y", { "id": "v_y", "name": "Attractiveness", "shorthand": "Y", "variableType": "continuous" }],
+    ["v_z", { "id": "v_z", "name": "Hollywood Success", "shorthand": "Z", "variableType": "binary" }]
+  ],
+  "causalEdges": [
+    { "id": "e_x_z", "source": "v_x", "target": "v_z", "data": {} },
+    { "id": "e_y_z", "source": "v_y", "target": "v_z", "data": {} }
+  ],
+  "estimands": [],
+  "models": [],
+  "nodePositions": {
+    "v_x": { "x": 150, "y": 50 },
+    "v_y": { "x": 450, "y": 50 },
+    "v_z": { "x": 300, "y": 250 }
+  },
+  "theme": "chalkboard",
+  "flowDirection": "TB"
+}

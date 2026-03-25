@@ -150,6 +150,7 @@ Lecture-driven development: watch McElreath's Statistical Rethinking 2026 lectur
 19. ✅ Resizable model cards (drag handle, nopan/nodrag)
 20. ✅ Context menu viewport adjustment (measures actual size)
 21. ✅ Grouped variable type picker
+22. ✅ Hover-only dashed connector lines (model card → estimand + DAG variables)
 
 ## Architecture Notes
 - `history.ts` — HistoryManager class with pause/resume to prevent recursive snapshots during undo/redo apply
@@ -157,6 +158,8 @@ Lecture-driven development: watch McElreath's Statistical Rethinking 2026 lectur
 - Keyboard shortcuts registered in App.tsx useEffect, excludes input fields
 - Toolbar uses visual separator divs for button grouping
 - EstimandCard and ModelCard are separate React Flow node types linked by IDs
+- Card nodes need invisible `<Handle>` components (opacity:0, pointerEvents:none) for React Flow to route edges to them — without handles, edges silently don't render
+- CSS `var()` custom properties don't work in React inline styles on SVG elements — use hardcoded color values for edge styles
 
 ## Roadmap (Lecture-Driven)
 - ✅ A05: DAG builder + estimand declaration + model generation

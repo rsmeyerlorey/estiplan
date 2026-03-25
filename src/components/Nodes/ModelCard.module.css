@@ -130,6 +130,20 @@
   opacity: 0.85;
 }
 
+.warningBadge {
+  display: inline-block;
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: rgba(245, 91, 91, 0.15);
+  color: #f55b5b;
+  white-space: nowrap;
+  cursor: help;
+  flex-shrink: 0;
+}
+
 /* ── Identifiability note ── */
 
 .identNote {
