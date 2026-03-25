@@ -8,6 +8,8 @@ import {
   IDENTIFIABILITY_TOOLTIPS,
   TABLE_TWO_TOOLTIP,
   SECTION_TOOLTIPS,
+  reasonLabel,
+  badControlLabel,
 } from '../../dag/explanations';
 import { InfoTip } from './InfoTip';
 import styles from './ModelCard.module.css';
@@ -99,13 +101,6 @@ function ModelCardComponent({ id, data }: NodeProps) {
     return styles.reasonTagFork;
   };
 
-  const getReasonLabel = (reason: string) => {
-    if (reason === 'fork') return 'fork';
-    if (reason === 'pipe-backdoor') return 'pipe';
-    if (reason === 'opened-collider') return 'collider fix';
-    return reason;
-  };
-
   return (
     <div
       ref={cardRef}
@@ -133,14 +128,14 @@ function ModelCardComponent({ id, data }: NodeProps) {
       {/* ── Identifiability ── */}
       {model.identifiable ? (
         model.adjustmentSet.length > 0 && (
-          <InfoTip text={IDENTIFIABILITY_TOOLTIPS.identifiable} align="left">
+          <InfoTip text={IDENTIFIABILITY_TOOLTIPS.identifiable} align="left" tag="div">
             <div className={styles.identOk}>
               &#x2713; Causal effect is identifiable via backdoor adjustment
             </div>
           </InfoTip>
         )
       ) : (
-        <InfoTip text={IDENTIFIABILITY_TOOLTIPS.notIdentifiable} align="left">
+        <InfoTip text={IDENTIFIABILITY_TOOLTIPS.notIdentifiable} align="left" tag="div">
           <div className={styles.identWarn}>
             &#x26A0; No sufficient adjustment set found &mdash; consider
             additional assumptions or measurements
@@ -151,7 +146,7 @@ function ModelCardComponent({ id, data }: NodeProps) {
       {/* ── Adjustment set (good controls) ── */}
       {model.adjustmentSet.length > 0 && (
         <div className={styles.adjustmentSection}>
-          <InfoTip text={SECTION_TOOLTIPS.conditioningOn} align="left">
+          <InfoTip text={SECTION_TOOLTIPS.conditioningOn} align="left" tag="div">
             <div className={styles.sectionLabel}>Conditioning on</div>
           </InfoTip>
           {model.adjustmentSet.map((entry) => {
@@ -164,7 +159,7 @@ function ModelCardComponent({ id, data }: NodeProps) {
                 </span>
                 <InfoTip text={REASON_TOOLTIPS[entry.reason] || ''}>
                   <span className={getReasonTagClass(entry.reason)}>
-                    {getReasonLabel(entry.reason)}
+                    {reasonLabel(entry.reason)}
                   </span>
                 </InfoTip>
               </div>
@@ -176,7 +171,7 @@ function ModelCardComponent({ id, data }: NodeProps) {
       {/* ── Bad controls (warnings) ── */}
       {model.badControls.length > 0 && (
         <div className={styles.warningSection}>
-          <InfoTip text={SECTION_TOOLTIPS.doNotConditionOn} align="left">
+          <InfoTip text={SECTION_TOOLTIPS.doNotConditionOn} align="left" tag="div">
             <div className={styles.sectionLabel}>Do not condition on</div>
           </InfoTip>
           {model.badControls.map((warning) => {
@@ -187,11 +182,7 @@ function ModelCardComponent({ id, data }: NodeProps) {
               <div key={warning.variableId} className={styles.warningItem}>
                 <InfoTip text={badTip}>
                   <span className={styles.warningBadge}>
-                    {warning.type === 'collider'
-                      ? 'collider'
-                      : warning.type === 'mediator-total'
-                        ? 'mediator'
-                        : 'post-tx'}
+                    {badControlLabel(warning.type)}
                   </span>
                 </InfoTip>
                 <span className={styles.warningText}>
@@ -249,7 +240,7 @@ function ModelCardComponent({ id, data }: NodeProps) {
 
       {/* ── Table Two Fallacy note ── */}
       {model.conditionedOn.length > 0 && (
-        <InfoTip text={TABLE_TWO_TOOLTIP} align="left">
+        <InfoTip text={TABLE_TWO_TOOLTIP} align="left" tag="div">
           <div className={styles.tableTwoNote}>
             Note: Only the coefficient for {treatmentName} is a causal effect.
             Coefficients on adjustment variables are not causal estimates (Table

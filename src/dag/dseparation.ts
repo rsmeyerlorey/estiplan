@@ -226,13 +226,11 @@ export function classifyTriple(
  * - Collider at node B: blocked UNLESS B or any descendant of B is in conditionedSet
  */
 export function isPathBlocked(
-  edges: { source: string; target: string }[],
   path: UndirectedPath,
   conditionedSet: Set<string>,
+  forwardAdj: Map<string, Set<string>>,
 ): boolean {
   if (path.nodes.length < 3) return false; // Direct edge, never blocked by conditioning
-
-  const forwardAdj = buildForwardAdj(edges);
 
   for (let i = 1; i < path.nodes.length - 1; i++) {
     const a = path.nodes[i - 1];
@@ -243,11 +241,13 @@ export function isPathBlocked(
 
     if (tripleType === 'collider') {
       // Collider: blocked UNLESS b or a descendant of b is conditioned on
+      if (conditionedSet.has(b)) continue;
       const descendants = findDescendants(b, forwardAdj);
-      const bOrDescendantConditioned =
-        conditionedSet.has(b) ||
-        [...descendants].some((d) => conditionedSet.has(d));
-      if (!bOrDescendantConditioned) {
+      let opened = false;
+      for (const d of descendants) {
+        if (conditionedSet.has(d)) { opened = true; break; }
+      }
+      if (!opened) {
         return true; // Blocked — collider not opened
       }
     } else {
@@ -401,7 +401,7 @@ export function findBackdoorAdjustmentSet(
     iterations++;
 
     for (const path of backdoorPaths) {
-      if (!isPathBlocked(edges, path, adjustmentSet)) {
+      if (!isPathBlocked(path, adjustmentSet, forwardAdj)) {
         // Path is still open — find a node to block it
         for (let i = 1; i < path.nodes.length - 1; i++) {
           const nodeId = path.nodes[i];
@@ -437,7 +437,7 @@ export function findBackdoorAdjustmentSet(
 
   // Verify: are all backdoor paths now blocked?
   const identifiable = backdoorPaths.every((p) =>
-    isPathBlocked(edges, p, adjustmentSet),
+    isPathBlocked(p, adjustmentSet, forwardAdj),
   );
 
   // Build bad control warnings

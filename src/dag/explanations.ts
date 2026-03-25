@@ -63,6 +63,28 @@ export const SECTION_TOOLTIPS = {
     'Backdoor analysis checks whether you can identify the causal effect by finding variables to condition on. It looks at all paths between treatment and outcome, classifies each as causal or non-causal, and finds which variables block the non-causal ones.',
 };
 
+// ── Shared label helpers ──
+
+/** Short label for adjustment set reason tags */
+export function reasonLabel(reason: string): string {
+  switch (reason) {
+    case 'fork': return 'fork';
+    case 'pipe-backdoor': return 'pipe';
+    case 'opened-collider': return 'collider fix';
+    default: return reason;
+  }
+}
+
+/** Short label for bad control type tags */
+export function badControlLabel(type: string): string {
+  switch (type) {
+    case 'collider': return 'collider';
+    case 'mediator-total': return 'mediator';
+    case 'post-treatment': return 'post-tx';
+    default: return type;
+  }
+}
+
 // ── Estimand kind tooltips ──
 
 export const ESTIMAND_KIND_TOOLTIPS = {

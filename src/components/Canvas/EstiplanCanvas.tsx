@@ -200,7 +200,7 @@ export function EstiplanCanvas() {
     }
 
     return edges;
-  }, [causalEdges, highlightedPaths, estimands, models, highlightedModelId]);
+  }, [causalEdges, highlightedPaths, models, highlightedModelId]);
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {

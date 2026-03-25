@@ -82,6 +82,21 @@ function computeModelFields(
   };
 }
 
+/** Compute which paths to highlight (filters out excluded mediators for direct effects) */
+function computeActivePaths(
+  kind: string,
+  paths: string[][],
+  excludedMediatorIds: string[],
+  sourceId: string,
+  targetId: string,
+): string[][] {
+  if (kind === 'total') return paths;
+  const filtered = paths.filter(
+    (path) => !path.some((nodeId) => excludedMediatorIds.includes(nodeId)),
+  );
+  return filtered.length > 0 ? filtered : [[sourceId, targetId]];
+}
+
 export const createEstimandSlice: StateCreator<
   EstimandSlice,
   [],
@@ -134,18 +149,7 @@ export const createEstimandSlice: StateCreator<
       modelId: null, // no model yet — user creates it explicitly
     };
 
-    let activePaths: string[][];
-    if (kind === 'total') {
-      activePaths = paths;
-    } else {
-      activePaths = paths.filter(
-        (path) =>
-          !path.some((nodeId) => excludedMediatorIds.includes(nodeId)),
-      );
-      if (activePaths.length === 0) {
-        activePaths = [[sourceId, targetId]];
-      }
-    }
+    const activePaths = computeActivePaths(kind, paths, excludedMediatorIds, sourceId, targetId);
 
     set((state) => ({
       estimands: [...state.estimands, estimand],
@@ -263,24 +267,12 @@ export const createEstimandSlice: StateCreator<
         return { highlightedEstimandId: null, highlightedPaths: null };
       }
 
-      let activePaths: string[][];
-      if (estimand.kind === 'total') {
-        activePaths = estimand.paths;
-      } else {
-        activePaths = estimand.paths.filter(
-          (path) =>
-            !path.some((nodeId) =>
-              estimand.excludedMediators.includes(nodeId),
-            ),
-        );
-        if (activePaths.length === 0) {
-          activePaths = [[estimand.sourceId, estimand.targetId]];
-        }
-      }
-
       return {
         highlightedEstimandId: id,
-        highlightedPaths: activePaths,
+        highlightedPaths: computeActivePaths(
+          estimand.kind, estimand.paths, estimand.excludedMediators,
+          estimand.sourceId, estimand.targetId,
+        ),
       };
     });
   },

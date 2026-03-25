@@ -9,6 +9,8 @@ import {
   IDENTIFIABILITY_TOOLTIPS,
   SECTION_TOOLTIPS,
   ESTIMAND_KIND_TOOLTIPS,
+  reasonLabel,
+  badControlLabel,
 } from '../../dag/explanations';
 import { InfoTip } from './InfoTip';
 import styles from './EstimandCard.module.css';
@@ -96,6 +98,7 @@ function EstimandCardComponent({ id, data }: NodeProps) {
           ? ESTIMAND_KIND_TOOLTIPS.total
           : ESTIMAND_KIND_TOOLTIPS.direct}
         align="left"
+        tag="div"
       >
         <div className={styles.kindBadge}>
           {estimand.kind === 'total' ? 'Total Effect' : 'Direct Effect'}
@@ -120,18 +123,18 @@ function EstimandCardComponent({ id, data }: NodeProps) {
       {!hasModel && showAnalysis && backdoorResult && (
         <div className={`${styles.analysisPreview} nodrag nopan`}>
           <div className={styles.analysisDivider} />
-          <InfoTip text={SECTION_TOOLTIPS.backdoorAnalysis} align="left">
+          <InfoTip text={SECTION_TOOLTIPS.backdoorAnalysis} align="left" tag="div">
             <div className={styles.analysisLabel}>Backdoor Analysis</div>
           </InfoTip>
 
           {backdoorResult.identifiable ? (
-            <InfoTip text={IDENTIFIABILITY_TOOLTIPS.identifiable} align="left">
+            <InfoTip text={IDENTIFIABILITY_TOOLTIPS.identifiable} align="left" tag="div">
               <div className={styles.analysisOk}>
                 &#x2713; Causal effect identifiable
               </div>
             </InfoTip>
           ) : (
-            <InfoTip text={IDENTIFIABILITY_TOOLTIPS.notIdentifiable} align="left">
+            <InfoTip text={IDENTIFIABILITY_TOOLTIPS.notIdentifiable} align="left" tag="div">
               <div className={styles.analysisWarn}>
                 &#x26A0; No sufficient adjustment set
               </div>
@@ -140,7 +143,7 @@ function EstimandCardComponent({ id, data }: NodeProps) {
 
           {backdoorResult.adjustmentSet.length > 0 && (
             <div className={styles.analysisSection}>
-              <InfoTip text={SECTION_TOOLTIPS.conditioningOn} align="left">
+              <InfoTip text={SECTION_TOOLTIPS.conditioningOn} align="left" tag="div">
                 <div className={styles.analysisSectionLabel}>
                   Good controls (condition on):
                 </div>
@@ -148,16 +151,11 @@ function EstimandCardComponent({ id, data }: NodeProps) {
               {backdoorResult.adjustmentSet.map((entry) => {
                 const v = variables.get(entry.variableId);
                 if (!v) return null;
-                const label = entry.reason === 'fork'
-                  ? 'fork'
-                  : entry.reason === 'pipe-backdoor'
-                    ? 'pipe'
-                    : 'fix';
                 return (
                   <div key={entry.variableId} className={styles.analysisItem}>
                     <InfoTip text={REASON_TOOLTIPS[entry.reason] || ''}>
                       <span className={styles.analysisTag}>
-                        {label}
+                        {reasonLabel(entry.reason)}
                       </span>
                     </InfoTip>
                     {v.name}
@@ -169,7 +167,7 @@ function EstimandCardComponent({ id, data }: NodeProps) {
 
           {backdoorResult.badControls.length > 0 && (
             <div className={styles.analysisSection}>
-              <InfoTip text={SECTION_TOOLTIPS.doNotConditionOn} align="left">
+              <InfoTip text={SECTION_TOOLTIPS.doNotConditionOn} align="left" tag="div">
                 <div className={styles.analysisSectionLabel}>
                   Bad controls (do NOT condition on):
                 </div>
@@ -177,11 +175,6 @@ function EstimandCardComponent({ id, data }: NodeProps) {
               {backdoorResult.badControls.map((warning) => {
                 const v = variables.get(warning.variableId);
                 if (!v) return null;
-                const label = warning.type === 'collider'
-                  ? 'collider'
-                  : warning.type === 'mediator-total'
-                    ? 'mediator'
-                    : 'post-tx';
                 const badTip = BAD_CONTROL_TOOLTIPS[warning.type] || warning.explanation;
                 return (
                   <div
@@ -190,7 +183,7 @@ function EstimandCardComponent({ id, data }: NodeProps) {
                   >
                     <InfoTip text={badTip}>
                       <span className={styles.analysisTagBad}>
-                        {label}
+                        {badControlLabel(warning.type)}
                       </span>
                     </InfoTip>
                     {v.name}

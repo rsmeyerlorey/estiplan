@@ -7,6 +7,8 @@ interface Props {
   className?: string;
   /** 'center' (default) or 'left' alignment */
   align?: 'center' | 'left';
+  /** Render as 'div' (block) or 'span' (inline). Default: 'span'. */
+  tag?: 'div' | 'span';
   children: React.ReactNode;
 }
 
@@ -15,9 +17,9 @@ interface Props {
  * Shows a help cursor + dotted underline on hover as a visual hint.
  * Click to toggle the tooltip; click anywhere else to dismiss.
  */
-export function InfoTip({ text, className, align = 'center', children }: Props) {
+export function InfoTip({ text, className, align = 'center', tag = 'span', children }: Props) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLSpanElement>(null);
+  const ref = useRef<HTMLElement>(null);
 
   const handleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -43,19 +45,20 @@ export function InfoTip({ text, className, align = 'center', children }: Props) 
   }, [open]);
 
   const popupClass = align === 'left' ? tip.tooltipPopupLeft : tip.tooltipPopup;
+  const Tag = tag;
 
   return (
-    <span
-      ref={ref}
+    <Tag
+      ref={ref as React.Ref<HTMLElement>}
       className={`${tip.tooltip} ${className || ''}`}
       onClick={handleClick}
     >
       {children}
       {open && (
-        <span className={`${popupClass} nopan nodrag`}>
+        <Tag className={`${popupClass} nopan nodrag`}>
           {text}
-        </span>
+        </Tag>
       )}
-    </span>
+    </Tag>
   );
 }
