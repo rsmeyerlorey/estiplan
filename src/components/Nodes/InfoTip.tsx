@@ -49,7 +49,7 @@ export function InfoTip({ text, className, align = 'center', tag = 'span', child
 
   return (
     <Tag
-      ref={ref as React.Ref<HTMLElement>}
+      ref={ref as React.Ref<never>}
       className={`${tip.tooltip} ${className || ''}`}
       onClick={handleClick}
     >

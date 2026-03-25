@@ -59,7 +59,6 @@ export function EstiplanCanvas() {
   const setNodePosition = useEstiplanStore((s) => s.setNodePosition);
   const addCausalEdge = useEstiplanStore((s) => s.addCausalEdge);
   const theme = useEstiplanStore((s) => s.theme);
-  const flowDirection = useEstiplanStore((s) => s.flowDirection);
 
   const defaultEdgeOptions = useMemo(
     () => ({

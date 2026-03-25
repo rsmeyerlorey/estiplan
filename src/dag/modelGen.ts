@@ -61,7 +61,7 @@ export interface GeneratedModel {
 export function generateModel(
   outcome: Variable,
   treatment: Variable,
-  kind: EstimandKind,
+  _kind: EstimandKind,
   conditionOn: Variable[],
   interaction: boolean,
 ): GeneratedModel {

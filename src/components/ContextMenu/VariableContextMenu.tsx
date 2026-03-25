@@ -4,7 +4,6 @@ import { useEstiplanStore } from '../../store/useEstiplanStore';
 import {
   VARIABLE_TYPE_LABELS,
   VARIABLE_TYPE_GROUPS,
-  type VariableType,
 } from '../../types/dag';
 import { EstimandSubMenu } from './EstimandSubMenu';
 import styles from './ContextMenu.module.css';

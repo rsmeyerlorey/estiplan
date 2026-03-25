@@ -69,6 +69,7 @@ export interface Variable {
 
 export interface CausalEdgeData {
   annotation?: string;
+  [key: string]: unknown;
 }
 
 export type EstimandKind = 'total' | 'direct';
