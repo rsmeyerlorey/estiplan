@@ -91,7 +91,7 @@ function VariableNodeComponent({ id, data }: NodeProps) {
         <span className={styles.shorthand}>{variable.shorthand}</span>
       </div>
 
-      {/* Source handle: triangle — "effects..." */}
+      {/* Source handle: triangle — "affects..." */}
       <Handle
         type="source"
         position={sourcePosition}
@@ -103,7 +103,7 @@ function VariableNodeComponent({ id, data }: NodeProps) {
         <div
           className={`${styles.handleTooltip} ${isTB ? styles.tooltipBelow : styles.tooltipRight}`}
         >
-          effects&hellip;
+          affects&hellip;
         </div>
       )}
 

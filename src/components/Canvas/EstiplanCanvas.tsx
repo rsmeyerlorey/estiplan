@@ -300,7 +300,7 @@ export function EstiplanCanvas() {
         onPaneClick={onPaneClick}
         fitView
         deleteKeyCode="Delete"
-        proOptions={{ hideAttribution: true }}
+
       >
         {theme === 'whiteboard' && (
           <Background
