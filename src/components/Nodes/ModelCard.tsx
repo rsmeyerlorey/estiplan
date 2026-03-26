@@ -1,4 +1,4 @@
-import { memo, useState, useCallback, useRef } from 'react';
+import { memo, useState, useCallback, useRef, useEffect } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { StatisticalModel } from '../../types/dag';
 import { useEstiplanStore } from '../../store/useEstiplanStore';
@@ -26,9 +26,15 @@ function ModelCardComponent({ id, data }: NodeProps) {
   const [cardWidth, setCardWidth] = useState(360);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  const [showPriors, setShowPriors] = useState(false);
+  const [editingPriorIdx, setEditingPriorIdx] = useState<number | null>(null);
+  const [editingPriorValue, setEditingPriorValue] = useState('');
+  const priorInputRef = useRef<HTMLInputElement>(null);
+
   const toggleModelInteraction = useEstiplanStore(
     (s) => s.toggleModelInteraction,
   );
+  const updateModelPrior = useEstiplanStore((s) => s.updateModelPrior);
   const removeModel = useEstiplanStore((s) => s.removeModel);
   const setHighlightedEstimand = useEstiplanStore(
     (s) => s.setHighlightedEstimand,
@@ -86,6 +92,28 @@ function ModelCardComponent({ id, data }: NodeProps) {
     },
     [cardWidth],
   );
+
+  useEffect(() => {
+    if (editingPriorIdx !== null && priorInputRef.current) {
+      priorInputRef.current.focus();
+      priorInputRef.current.select();
+    }
+  }, [editingPriorIdx]);
+
+  const handlePriorEdit = useCallback(
+    (idx: number) => {
+      setEditingPriorIdx(idx);
+      setEditingPriorValue(model.priors[idx].prior);
+    },
+    [model.priors],
+  );
+
+  const handlePriorCommit = useCallback(() => {
+    if (editingPriorIdx !== null && editingPriorValue.trim()) {
+      updateModelPrior(id, editingPriorIdx, editingPriorValue.trim(), variables);
+    }
+    setEditingPriorIdx(null);
+  }, [id, editingPriorIdx, editingPriorValue, updateModelPrior, variables]);
 
   const hasConditionedVars =
     model.conditionedOn.length > 0 || model.excludedMediators.length > 0;
@@ -205,6 +233,56 @@ function ModelCardComponent({ id, data }: NodeProps) {
           </div>
         ))}
       </div>
+
+      {/* ── Priors (collapsible) ── */}
+      {model.priors && model.priors.length > 0 && (
+        <div className={styles.priorsSection}>
+          <button
+            className={styles.priorsToggle}
+            onClick={(e) => { e.stopPropagation(); setShowPriors(!showPriors); }}
+          >
+            <span className={styles.sectionLabel} style={{ marginBottom: 0 }}>
+              Priors {showPriors ? '\u25B4' : '\u25BE'}
+            </span>
+          </button>
+          {showPriors && (
+            <>
+              <div className={styles.priorsNote}>
+                Assumes centered &amp; standardized predictors. Click a prior to edit.
+              </div>
+              <div className={styles.priorsList}>
+                {model.priors.map((p, idx) => (
+                  <div key={idx} className={styles.priorItem}>
+                    <span className={styles.priorLabel}>{p.label}</span>
+                    {editingPriorIdx === idx ? (
+                      <input
+                        ref={priorInputRef}
+                        className={`${styles.priorInput} nodrag nopan`}
+                        value={editingPriorValue}
+                        onChange={(e) => setEditingPriorValue(e.target.value)}
+                        onBlur={handlePriorCommit}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handlePriorCommit();
+                          if (e.key === 'Escape') setEditingPriorIdx(null);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    ) : (
+                      <button
+                        className={styles.priorValue}
+                        onClick={(e) => { e.stopPropagation(); handlePriorEdit(idx); }}
+                        title="Click to edit"
+                      >
+                        {p.prior}
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       {/* ── brms code ── */}
       <div className={styles.sectionLabel}>

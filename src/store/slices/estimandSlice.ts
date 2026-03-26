@@ -4,6 +4,7 @@ import type {
   StatisticalModel,
   EstimandKind,
   Variable,
+  PriorSpec,
 } from '../../types/dag';
 import { generateId } from '../../utils/id';
 import { findAllPaths, buildAdjacency } from '../../dag/pathfinding';
@@ -40,6 +41,38 @@ export interface EstimandSlice {
     modelId: string,
     variables: Map<string, Variable>,
   ) => void;
+  updateModelPrior: (
+    modelId: string,
+    priorIndex: number,
+    newPrior: string,
+    variables: Map<string, Variable>,
+  ) => void;
+}
+
+/**
+ * Rebuild brms code string, replacing the prior block with edited priors.
+ */
+function rebuildBrmsWithPriors(baseCode: string, priors: PriorSpec[]): string {
+  // Strip everything from "prior = c(" onwards (or the closing paren)
+  const formulaMatch = baseCode.match(/^brm\([^,]+,\s*\n\s*data = d,\s*\n\s*family = [^,)]+/s);
+  if (!formulaMatch) return baseCode;
+
+  const base = formulaMatch[0];
+
+  if (priors.length === 0) return base + ')';
+
+  const priorLines = priors.map((p, i) => {
+    const coefArg = p.coef ? `, coef = "${p.coef}"` : '';
+    const comma = i < priors.length - 1 ? ',' : '';
+    return `  set_prior("${p.prior}", class = "${p.class}"${coefArg})${comma}`;
+  });
+
+  return [
+    base + ',',
+    `    prior = c(`,
+    ...priorLines,
+    `    ))`,
+  ].join('\n');
 }
 
 /**
@@ -79,6 +112,7 @@ function computeModelFields(
     mathLines: model.mathLines,
     brmsCode: model.brmsCode,
     brmsFamily: model.family,
+    priors: model.priors,
   };
 }
 
@@ -330,6 +364,46 @@ export const createEstimandSlice: StateCreator<
           ...m,
           interaction: newInteraction,
           ...modelFields,
+        };
+      });
+
+      return { models };
+    });
+  },
+
+  updateModelPrior: (modelId, priorIndex, newPrior, variables) => {
+    set((state) => {
+      const models = state.models.map((m) => {
+        if (m.id !== modelId) return m;
+
+        // Update the prior spec
+        const newPriors = m.priors.map((p, i) =>
+          i === priorIndex ? { ...p, prior: newPrior } : p,
+        );
+
+        // Regenerate brms code with updated priors
+        const source = variables.get(m.sourceId);
+        const target = variables.get(m.targetId);
+        if (!source || !target) return m;
+
+        const modelFields = computeModelFields(
+          source,
+          target,
+          m.kind,
+          m.conditionedOn,
+          m.excludedMediators,
+          m.interaction,
+          variables,
+        );
+
+        // Replace the generated priors with the user's edited ones
+        // and regenerate brms code using them
+        const brmsCode = rebuildBrmsWithPriors(modelFields.brmsCode, newPriors);
+
+        return {
+          ...m,
+          priors: newPriors,
+          brmsCode,
         };
       });
 

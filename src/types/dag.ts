@@ -137,4 +137,17 @@ export interface StatisticalModel {
   brmsCode: string;
   /** brms family string */
   brmsFamily: string;
+  /** Prior specifications: parameter class → prior distribution string */
+  priors: PriorSpec[];
+}
+
+export interface PriorSpec {
+  /** brms prior class: "Intercept", "b", "sigma", "phi", etc. */
+  class: string;
+  /** Optional: specific coefficient name (e.g., "age_at_marriage") */
+  coef: string;
+  /** Prior distribution string (e.g., "normal(0, 1)") */
+  prior: string;
+  /** Human-readable label for the UI */
+  label: string;
 }

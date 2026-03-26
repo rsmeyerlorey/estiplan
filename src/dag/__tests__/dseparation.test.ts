@@ -391,6 +391,73 @@ describe('Non-standard paths (forward-then-reverse)', () => {
   });
 });
 
+// ── Prior Generation ──
+
+describe('Prior generation', () => {
+  const dag = loadDag('02-simple-fork.estiplan.json');
+
+  it('generates intercept, slope, and sigma priors for gaussian', () => {
+    const outcome = getVariable(dag, 'v_y');
+    const treatment = getVariable(dag, 'v_x');
+    const conditionOn = [getVariable(dag, 'v_z')];
+
+    const model = generateModel(outcome, treatment, 'total', conditionOn, false);
+
+    expect(model.priors.length).toBeGreaterThanOrEqual(3);
+    const classes = model.priors.map((p) => p.class);
+    expect(classes).toContain('Intercept');
+    expect(classes).toContain('b');
+    expect(classes).toContain('sigma');
+  });
+
+  it('brms code includes set_prior calls', () => {
+    const outcome = getVariable(dag, 'v_y');
+    const treatment = getVariable(dag, 'v_x');
+
+    const model = generateModel(outcome, treatment, 'total', [], false);
+
+    expect(model.brmsCode).toContain('prior = c(');
+    expect(model.brmsCode).toContain('set_prior(');
+  });
+
+  it('uses logit-scale priors for binary outcomes', () => {
+    const binaryDag = loadDag('10-brms-family-sweep.estiplan.json');
+    const outcome = getVariable(binaryDag, 'v_bern');
+    const treatment = getVariable(binaryDag, 'v_x');
+
+    const model = generateModel(outcome, treatment, 'total', [], false);
+
+    const interceptPrior = model.priors.find((p) => p.class === 'Intercept');
+    expect(interceptPrior).toBeDefined();
+    expect(interceptPrior!.prior).toBe('normal(0, 1.5)');
+    expect(interceptPrior!.label).toContain('logit');
+  });
+
+  it('uses log-scale priors for count outcomes', () => {
+    const countDag = loadDag('10-brms-family-sweep.estiplan.json');
+    const outcome = getVariable(countDag, 'v_pois');
+    const treatment = getVariable(countDag, 'v_x');
+
+    const model = generateModel(outcome, treatment, 'total', [], false);
+
+    const interceptPrior = model.priors.find((p) => p.class === 'Intercept');
+    expect(interceptPrior!.prior).toBe('normal(0, 1)');
+    expect(interceptPrior!.label).toContain('log');
+  });
+
+  it('includes phi prior for Beta family', () => {
+    const betaDag = loadDag('10-brms-family-sweep.estiplan.json');
+    const outcome = getVariable(betaDag, 'v_beta');
+    const treatment = getVariable(betaDag, 'v_x');
+
+    const model = generateModel(outcome, treatment, 'total', [], false);
+
+    const phiPrior = model.priors.find((p) => p.class === 'phi');
+    expect(phiPrior).toBeDefined();
+    expect(phiPrior!.prior).toBe('exponential(1)');
+  });
+});
+
 // ── Additional: brms code structure ──
 
 describe('brms code generation', () => {

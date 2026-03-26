@@ -1,4 +1,4 @@
-import type { Variable, VariableType, EstimandKind } from '../types/dag';
+import type { Variable, VariableType, EstimandKind, PriorSpec } from '../types/dag';
 
 /**
  * Determines the brms family based on the outcome variable type.
@@ -46,6 +46,8 @@ export interface GeneratedModel {
   family: string;
   /** Variables that are conditioned on (predictors in the model) */
   predictors: Variable[];
+  /** Default prior specifications */
+  priors: PriorSpec[];
 }
 
 /**
@@ -144,18 +146,143 @@ export function generateModel(
 
   const formula = `${outcomeR} ~ ${formulaParts.join(' + ')}`;
 
-  const brmsCode = [
+  // ── Priors ──
+
+  const priors = generateDefaultPriors(outcome.variableType, treatment, conditionOn, interaction);
+
+  const priorLines = priors.map((p) => {
+    const coefArg = p.coef ? `, coef = "${p.coef}"` : '';
+    return `  set_prior("${p.prior}", class = "${p.class}"${coefArg})`;
+  });
+
+  const brmsCodeLines = [
     `brm(${formula},`,
     `    data = d,`,
-    `    family = ${family})`,
-  ].join('\n');
+    `    family = ${family},`,
+  ];
+  if (priorLines.length > 0) {
+    brmsCodeLines.push(`    prior = c(`);
+    priorLines.forEach((line, i) => {
+      brmsCodeLines.push(line + (i < priorLines.length - 1 ? ',' : ''));
+    });
+    brmsCodeLines.push(`    ))`);
+  } else {
+    // Replace trailing comma on family line
+    brmsCodeLines[brmsCodeLines.length - 1] = `    family = ${family})`;
+  }
+
+  const brmsCode = brmsCodeLines.join('\n');
 
   return {
     mathLines,
     brmsCode,
     family,
     predictors,
+    priors,
   };
+}
+
+/**
+ * Generate sensible default priors based on the outcome family.
+ * Assumes centered and standardized predictors (McElreath's recommendation).
+ */
+function generateDefaultPriors(
+  outcomeType: VariableType,
+  treatment: Variable,
+  conditionOn: Variable[],
+  interaction: boolean,
+): PriorSpec[] {
+  const priors: PriorSpec[] = [];
+
+  // Determine link scale for slope priors
+  const usesLogitLink =
+    outcomeType === 'binary' || outcomeType === 'ordinal';
+  const usesLogLink =
+    outcomeType === 'count' || outcomeType === 'positive-continuous';
+
+  // Intercept prior
+  if (usesLogitLink) {
+    priors.push({
+      class: 'Intercept',
+      coef: '',
+      prior: 'normal(0, 1.5)',
+      label: '\u03b1 (intercept, logit scale)',
+    });
+  } else if (usesLogLink) {
+    priors.push({
+      class: 'Intercept',
+      coef: '',
+      prior: 'normal(0, 1)',
+      label: '\u03b1 (intercept, log scale)',
+    });
+  } else {
+    priors.push({
+      class: 'Intercept',
+      coef: '',
+      prior: 'normal(0, 0.5)',
+      label: '\u03b1 (intercept)',
+    });
+  }
+
+  // Slope priors — one per predictor
+  const slopePrior = usesLogitLink
+    ? 'normal(0, 1)'
+    : usesLogLink
+      ? 'normal(0, 0.5)'
+      : 'normal(0, 0.5)';
+
+  const treatmentIsCategorical =
+    treatment.variableType === 'categorical' || treatment.variableType === 'binary';
+
+  if (!treatmentIsCategorical) {
+    priors.push({
+      class: 'b',
+      coef: rName(treatment.name),
+      prior: slopePrior,
+      label: `\u03b2 ${treatment.shorthand} (treatment)`,
+    });
+  }
+
+  for (const v of conditionOn) {
+    const isCat = v.variableType === 'categorical' || v.variableType === 'binary';
+    if (!isCat) {
+      const coef = interaction
+        ? `${rName(treatment.name)}:${rName(v.name)}`
+        : rName(v.name);
+      priors.push({
+        class: 'b',
+        coef,
+        prior: slopePrior,
+        label: `\u03b2 ${v.shorthand} (${interaction ? 'interaction' : 'adjustment'})`,
+      });
+    }
+  }
+
+  // Scale / dispersion parameter
+  if (outcomeType === 'continuous' || outcomeType === 'time-series' || outcomeType === 'time-cycle') {
+    priors.push({
+      class: 'sigma',
+      coef: '',
+      prior: 'exponential(1)',
+      label: '\u03c3 (residual SD)',
+    });
+  } else if (outcomeType === 'positive-continuous') {
+    priors.push({
+      class: 'sigma',
+      coef: '',
+      prior: 'exponential(1)',
+      label: '\u03c3 (log-scale SD)',
+    });
+  } else if (outcomeType === 'proportion') {
+    priors.push({
+      class: 'phi',
+      coef: '',
+      prior: 'exponential(1)',
+      label: '\u03c6 (precision)',
+    });
+  }
+
+  return priors;
 }
 
 /**
