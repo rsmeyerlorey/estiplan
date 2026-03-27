@@ -18,10 +18,12 @@ Inspired by Richard McElreath's [Statistical Rethinking](https://github.com/rmce
 - Backdoor criterion with automatic adjustment sets
 - Bad control detection and Table Two Fallacy warnings
 - `brms` code generation for all common outcome types (Gaussian, Bernoulli, Poisson, Beta, ordinal, lognormal)
+- Default prior specification with educational tooltips (editable per parameter)
 - Interaction toggle for treatment effects
 - Undo/redo, save/load (.estiplan.json files), auto-persistence
 - Whiteboard and chalkboard themes
 - Bidirectional estimand declaration (forward and reverse)
+- Test suite with 10 reference DAGs covering common causal structures
 
 ## Tech stack
 
@@ -37,7 +39,7 @@ npx vite build     # production build
 
 ## Status
 
-Active development, following McElreath's 2026 lecture series. Core DAG-to-model pipeline is complete through Lecture A07. See CLAUDE.md for detailed architecture notes.
+Active development, following McElreath's 2026 lecture series. Core DAG-to-model pipeline is complete through Lecture A07, with prior specification added. See [ROADMAP.md](ROADMAP.md) for planned features and [CLAUDE.md](CLAUDE.md) for detailed architecture notes.
 
 ## License
 

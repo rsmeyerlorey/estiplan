@@ -95,6 +95,9 @@ Declaration flow now includes backdoor analysis summary before confirming.
 - Interaction toggle works for all treatment types (categorical and continuous)
 - ⓘ info tip about data preparation (centering, scaling)
 - Table Two Fallacy note on model cards when adjustment variables present
+- Default prior specification: generates sensible priors per family (logit-scale for binary, log-scale for count, etc.)
+- Priors are editable per parameter with educational tooltips explaining each choice
+- `set_prior()` calls included in generated brms code
 
 ### Variable Type Groups (UI)
 Types organized into expandable groups in the context menu:
@@ -150,6 +153,9 @@ Lecture-driven development: follow along with McElreath's Statistical Rethinking
 20. ✅ Context menu viewport adjustment (measures actual size)
 21. ✅ Grouped variable type picker
 22. ✅ Hover-only dashed connector lines (model card → estimand + DAG variables)
+23. ✅ Default prior specification with educational tooltips (editable per parameter)
+24. ✅ Automated test suite (10 reference DAGs, d-separation + prior generation tests)
+25. ✅ Minimal adjustment set algorithm + non-standard path handling
 
 ## Architecture Notes
 - `history.ts` — HistoryManager class with pause/resume to prevent recursive snapshots during undo/redo apply
@@ -164,12 +170,12 @@ Lecture-driven development: follow along with McElreath's Statistical Rethinking
 - ✅ A05: DAG builder + estimand declaration + model generation
 - ✅ A06: Fork confound detection + conditioning set suggestions
 - ✅ A07: Complete d-separation (pipe, collider, descendant) + backdoor criterion + split cards + Table Two Fallacy
+- ✅ Prior specification UI (default priors with educational tooltips, editable)
 - ⬜ A08+: Continue with lectures (sensitivity analysis, measurement error, missing data, etc.)
 - ⬜ Mutilated DAG view (grayed arrows on intervention)
-- ⬜ Prior specification UI
 - ⬜ Full R script export
 - ⬜ Synthetic data simulation & testing loop
 - ⬜ Multiple generative models comparison
 - ⬜ Multilevel models (varying effects syntax in brms)
 - ⬜ Multivariate models (bf() syntax in brms)
-- See FUTURE_FEATURES.md for additional ideas
+- See ROADMAP.md for the full prioritized roadmap
