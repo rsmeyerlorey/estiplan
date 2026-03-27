@@ -207,6 +207,7 @@ function generateDefaultPriors(
       coef: '',
       prior: 'normal(0, 1.5)',
       label: '\u03b1 (intercept, logit scale)',
+      tooltip: 'On the logit scale, Normal(0, 1.5) places ~95% of the prior mass on baseline probabilities between about 5% and 95%. This is mildly regularizing \u2014 it rules out near-certainty (close to 0% or 100%) without being very informative about where the baseline falls.',
     });
   } else if (usesLogLink) {
     priors.push({
@@ -214,6 +215,7 @@ function generateDefaultPriors(
       coef: '',
       prior: 'normal(0, 1)',
       label: '\u03b1 (intercept, log scale)',
+      tooltip: 'On the log scale, Normal(0, 1) centers the baseline rate at exp(0) = 1, with ~95% of the mass between exp(\u22122) \u2248 0.14 and exp(2) \u2248 7.4. For standardized data, this is mildly regularizing \u2014 it allows a wide range of baseline rates while keeping estimates grounded.',
     });
   } else {
     priors.push({
@@ -221,6 +223,7 @@ function generateDefaultPriors(
       coef: '',
       prior: 'normal(0, 0.5)',
       label: '\u03b1 (intercept)',
+      tooltip: 'For standardized data, Normal(0, 0.5) means the average outcome (when all predictors are at their mean) is likely within \u00b11 SD of the outcome\u2019s mean. Weakly regularizing \u2014 it gently discourages extreme intercepts without being very informative.',
     });
   }
 
@@ -231,6 +234,12 @@ function generateDefaultPriors(
       ? 'normal(0, 0.5)'
       : 'normal(0, 0.5)';
 
+  const slopeTooltip = usesLogitLink
+    ? 'On the logit scale, Normal(0, 1) means a 1-SD change in the predictor shifts the log-odds by at most about \u00b12. This allows substantial effects while preventing unrealistically extreme ones \u2014 a shift of 2 on the logit scale already moves a 50% probability to ~88%.'
+    : usesLogLink
+      ? 'On the log scale, Normal(0, 0.5) means a 1-SD change in the predictor multiplies the outcome by at most about exp(\u00b11) \u2248 0.37 to 2.7. Mildly regularizing \u2014 it allows moderately strong effects but is skeptical of any single predictor changing the outcome by orders of magnitude.'
+      : 'For standardized data, Normal(0, 0.5) means a 1-SD change in the predictor changes the outcome by at most about \u00b11 SD. Weakly regularizing \u2014 it says you don\u2019t expect any single predictor to have a huge effect, but doesn\u2019t rule it out.';
+
   const treatmentIsCategorical =
     treatment.variableType === 'categorical' || treatment.variableType === 'binary';
 
@@ -240,6 +249,7 @@ function generateDefaultPriors(
       coef: rName(treatment.name),
       prior: slopePrior,
       label: `\u03b2 ${treatment.shorthand} (treatment)`,
+      tooltip: `Treatment effect slope. ${slopeTooltip}`,
     });
   }
 
@@ -249,11 +259,16 @@ function generateDefaultPriors(
       const coef = interaction
         ? `${rName(treatment.name)}:${rName(v.name)}`
         : rName(v.name);
+      const role = interaction ? 'interaction' : 'adjustment';
+      const roleTooltip = interaction
+        ? `Interaction term \u2014 how the treatment\u2019s effect changes depending on ${v.name}. ${slopeTooltip}`
+        : `Adjustment variable \u2014 included to block a non-causal path, not to estimate its own causal effect. ${slopeTooltip}`;
       priors.push({
         class: 'b',
         coef,
         prior: slopePrior,
-        label: `\u03b2 ${v.shorthand} (${interaction ? 'interaction' : 'adjustment'})`,
+        label: `\u03b2 ${v.shorthand} (${role})`,
+        tooltip: roleTooltip,
       });
     }
   }
@@ -265,6 +280,7 @@ function generateDefaultPriors(
       coef: '',
       prior: 'exponential(1)',
       label: '\u03c3 (residual SD)',
+      tooltip: 'Exponential(1) constrains the residual standard deviation to be positive, with a mean of 1 and ~95% below 3. For standardized data, this is mildly regularizing \u2014 it\u2019s skeptical of models that explain nothing (huge \u03c3) while allowing substantial unexplained variation.',
     });
   } else if (outcomeType === 'positive-continuous') {
     priors.push({
@@ -272,6 +288,7 @@ function generateDefaultPriors(
       coef: '',
       prior: 'exponential(1)',
       label: '\u03c3 (log-scale SD)',
+      tooltip: 'Exponential(1) on the log-scale standard deviation is weakly regularizing. Most mass falls below ~3, preventing unrealistically wide distributions on the log scale while allowing moderate variability in the original positive-valued outcome.',
     });
   } else if (outcomeType === 'proportion') {
     priors.push({
@@ -279,6 +296,7 @@ function generateDefaultPriors(
       coef: '',
       prior: 'exponential(1)',
       label: '\u03c6 (precision)',
+      tooltip: 'For Beta regression, the precision parameter \u03c6 controls how tightly clustered the proportions are. Higher \u03c6 = less spread. Exponential(1) is weakly regularizing with a mean of 1, allowing anything from very dispersed to moderately concentrated proportions.',
     });
   }
 

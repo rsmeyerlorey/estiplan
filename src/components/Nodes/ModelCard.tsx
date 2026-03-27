@@ -253,7 +253,9 @@ function ModelCardComponent({ id, data }: NodeProps) {
               <div className={styles.priorsList}>
                 {model.priors.map((p, idx) => (
                   <div key={idx} className={styles.priorItem}>
-                    <span className={styles.priorLabel}>{p.label}</span>
+                    <InfoTip text={p.tooltip || ''}>
+                      <span className={styles.priorLabel}>{p.label}</span>
+                    </InfoTip>
                     {editingPriorIdx === idx ? (
                       <input
                         ref={priorInputRef}

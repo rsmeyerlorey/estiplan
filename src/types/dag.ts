@@ -150,4 +150,6 @@ export interface PriorSpec {
   prior: string;
   /** Human-readable label for the UI */
   label: string;
+  /** Educational tooltip explaining why this prior was chosen */
+  tooltip: string;
 }
