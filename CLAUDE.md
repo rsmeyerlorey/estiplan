@@ -122,11 +122,10 @@ npx vite build     # production build
 ```
 
 ## Git
-- Repo: local only (no remote yet)
-- User: Robin <robinmeyerlorey@gmail.com>
+- Repo: GitHub (private)
 
 ## Development Workflow
-Lecture-driven development: watch McElreath's Statistical Rethinking 2026 lectures, paste transcripts, add features as new concepts are introduced. Each lecture is a natural test case.
+Lecture-driven development: follow along with McElreath's Statistical Rethinking 2026 lectures, adding features as new concepts are introduced. Each lecture is a natural test case.
 
 ## Completed Features
 1. ✅ DAG builder (variables, causal arrows, layout, TB/LR toggle)

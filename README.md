@@ -1,73 +1,44 @@
-# React + TypeScript + Vite
+# Estiplan
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An interactive causal DAG workflow tool that helps scientists turn whiteboard sketches of causal models into formal statistical coding plans.
 
-Currently, two official plugins are available:
+Inspired by Richard McElreath's [Statistical Rethinking](https://github.com/rmcelreath/stat_rethinking_2026) course (2026), Estiplan fills a gap McElreath identified: existing pipeline tools handle computation chains, but nothing combines **scientific justifications** with **workflow visualization** and **attached code** at each step.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## What it does
 
-## React Compiler
+1. **Build a causal DAG** -- add variables (continuous, binary, ordinal, count, etc.), draw causal arrows, and let auto-layout keep things tidy.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+2. **Declare estimands** -- specify what causal effect you want to estimate (total or direct), and Estiplan generates the do-calculus notation and plain-English description.
 
-## Expanding the ESLint configuration
+3. **Get a statistical model** -- Estiplan runs the backdoor criterion via a full d-separation engine, identifies the correct adjustment set (with per-variable reasons), warns about bad controls (colliders, post-treatment bias, mediators), and generates both the math notation and copy-pasteable `brms` R code.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Features
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- Full d-separation engine (fork, pipe, collider, descendant rules)
+- Backdoor criterion with automatic adjustment sets
+- Bad control detection and Table Two Fallacy warnings
+- `brms` code generation for all common outcome types (Gaussian, Bernoulli, Poisson, Beta, ordinal, lognormal)
+- Interaction toggle for treatment effects
+- Undo/redo, save/load (.estiplan.json files), auto-persistence
+- Whiteboard and chalkboard themes
+- Bidirectional estimand declaration (forward and reverse)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## Tech stack
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+React 19 + TypeScript, Vite, [React Flow](https://reactflow.dev/), Zustand, dagre
+
+## Getting started
+
+```bash
+npm install
+npm run dev        # dev server on localhost:5173
+npx vite build     # production build
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Status
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Active development, following McElreath's 2026 lecture series. Core DAG-to-model pipeline is complete through Lecture A07. See CLAUDE.md for detailed architecture notes.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## License
+
+MIT
