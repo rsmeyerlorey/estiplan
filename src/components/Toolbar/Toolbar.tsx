@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { useEstiplanStore } from '../../store/useEstiplanStore';
 import type { SavedState } from '../../store/persistence';
 import styles from './Toolbar.module.css';
@@ -6,8 +6,22 @@ import styles from './Toolbar.module.css';
 export function Toolbar() {
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const aboutRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Close about panel when clicking outside
+  useEffect(() => {
+    if (!aboutOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (aboutRef.current && !aboutRef.current.contains(e.target as Node)) {
+        setAboutOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [aboutOpen]);
 
   const addVariable = useEstiplanStore((s) => s.addVariable);
   const setNodePosition = useEstiplanStore((s) => s.setNodePosition);
@@ -149,7 +163,40 @@ export function Toolbar() {
 
   return (
     <div className={styles.toolbar}>
-      <span className={styles.title}>Estiplan</span>
+      <div className={styles.titleWrap} ref={aboutRef}>
+        <span
+          className={styles.title}
+          onClick={() => setAboutOpen(!aboutOpen)}
+          style={{ cursor: 'pointer' }}
+          title="About Estiplan"
+        >
+          Estiplan
+        </span>
+        {aboutOpen && (
+          <div className={styles.aboutPanel}>
+            <p className={styles.aboutBlurb}>
+              <em>Estimand</em> comes from Latin — you can think of it as the{' '}
+              <strong>esti</strong>mate you de<strong>mand</strong> from your data.
+            </p>
+            <p className={styles.aboutBlurb}>
+              Estiplan is a tool that helps you define a scientific model, choose an
+              estimand, and plan a statistical approach for answering your questions.
+            </p>
+            <p className={styles.aboutMeta}>
+              Inspired by Richard McElreath's{' '}
+              <a
+                href="https://github.com/rmcelreath/stat_rethinking_2026"
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.aboutLink}
+              >
+                Statistical Rethinking
+              </a>{' '}
+              (2026).
+            </p>
+          </div>
+        )}
+      </div>
 
       <button className={styles.btn} onClick={handleNew} title="New estiplan">
         New
