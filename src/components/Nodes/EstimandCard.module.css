@@ -33,11 +33,34 @@
   font-weight: 600;
 }
 
+.doNotationRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .doNotation {
   font-size: 14px;
   font-family: 'Cambria Math', 'Latin Modern Math', Georgia, serif;
   color: var(--estiplan-card-text);
   font-style: italic;
+  opacity: 0.9;
+  flex: 1;
+}
+
+.copyButton {
+  background: none;
+  border: none;
+  color: var(--estiplan-card-text);
+  cursor: pointer;
+  font-size: 13px;
+  opacity: 0.4;
+  padding: 2px 4px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.copyButton:hover {
   opacity: 0.9;
 }
 

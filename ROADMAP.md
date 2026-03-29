@@ -31,11 +31,31 @@ Completed. Before making the repo public or sharing broadly.
 
 Core features that complete the DAG-to-inference pipeline McElreath teaches.
 
-### 2.1 Prior specification UI
-- Let users set priors per coefficient on the model card
-- Generate `set_prior()` calls in brms code
-- Prior predictive simulation (show what priors imply about outcome space)
-- **Why:** Statistical Rethinking is fundamentally Bayesian; priors are modeling decisions, not defaults to ignore
+### 2.1 Prior Wizard integration
+The Prior Wizard is a standalone app (`../prior-wizard/`) that walks users through setting Bayesian priors step by step. Once complete, it integrates into Estiplan as follows:
+
+**UI design:**
+- **Hamburger menu (☰) next to "Estiplan" title** in the toolbar replaces the current title-click about panel
+  - Opens a left side panel (pushes canvas over, doesn't overlay)
+  - Contains: about blurb, Prior Wizard launcher, and a home for future tools
+- **Model card priors section** expanded by default
+  - "Click a prior to edit directly, or use the Prior Wizard"
+  - Clicking "Prior Wizard" opens the left panel with wizard pre-filled from the estimand
+- **Two entry points:** model card (contextual) and side panel (exploratory)
+
+**Architecture:**
+- New `SidePanel` component in flex layout next to the canvas
+- Panel state in Zustand store (open/closed, active tool)
+- Prior Wizard becomes a component that accepts pre-filled props (outcome name, treatment name, family from variable types) and returns priors via callback
+- `modelGen.ts` uses wizard-set priors when available, falls back to defaults
+- Prior Wizard also remains standalone at `prior-wizard/` for users who just want to set priors without a DAG
+
+**What Estiplan already knows (free pre-fill):**
+- Variable names, types → outcome family (Steps 0–1 skipped)
+- Which variable is treatment vs outcome (from estimand)
+- The DAG stays visible while setting priors
+
+**Why:** Statistical Rethinking is fundamentally Bayesian; priors are modeling decisions, not defaults to ignore
 
 ### 2.2 Simulation loop
 - Generate synthetic data from the DAG (specify true effect sizes → simulate)

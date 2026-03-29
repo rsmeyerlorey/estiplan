@@ -23,6 +23,7 @@ function ModelCardComponent({ id, data }: NodeProps) {
   const model = data as unknown as StatisticalModel;
   const [showInfo, setShowInfo] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
+  const [mathCopied, setMathCopied] = useState(false);
   const [cardWidth, setCardWidth] = useState(360);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -71,6 +72,20 @@ function ModelCardComponent({ id, data }: NodeProps) {
       }
     },
     [model.brmsCode],
+  );
+
+  const handleCopyMath = useCallback(
+    async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      try {
+        await navigator.clipboard.writeText(model.mathLines.join('\n'));
+        setMathCopied(true);
+        setTimeout(() => setMathCopied(false), 1500);
+      } catch {
+        // Clipboard API may not be available
+      }
+    },
+    [model.mathLines],
   );
 
   const onResizeStart = useCallback(
@@ -225,7 +240,16 @@ function ModelCardComponent({ id, data }: NodeProps) {
       <div className={styles.divider} />
 
       {/* ── Math notation ── */}
-      <div className={styles.sectionLabel}>Model</div>
+      <div className={styles.sectionLabel}>
+        Model
+        <button
+          className={styles.copyButton}
+          onClick={handleCopyMath}
+          title="Copy math notation"
+        >
+          {mathCopied ? '\u2713' : '\u2398'}
+        </button>
+      </div>
       <div className={styles.mathBlock}>
         {model.mathLines.map((line, i) => (
           <div key={i} className={styles.mathLine}>

@@ -1,4 +1,4 @@
-import { memo, useState, useCallback, useMemo } from 'react';
+import { memo, useState, useCallback, useMemo, useRef } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { Estimand } from '../../types/dag';
 import { useEstiplanStore } from '../../store/useEstiplanStore';
@@ -24,6 +24,17 @@ import styles from './EstimandCard.module.css';
 function EstimandCardComponent({ id, data }: NodeProps) {
   const estimand = data as unknown as Estimand;
   const [showAnalysis, setShowAnalysis] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const text = `${estimand.plainEnglish}\n${estimand.doNotation}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch { /* clipboard may not be available */ }
+  }, [estimand.plainEnglish, estimand.doNotation]);
 
   const removeEstimand = useEstiplanStore((s) => s.removeEstimand);
   const generateModelForEstimand = useEstiplanStore(
@@ -105,7 +116,16 @@ function EstimandCardComponent({ id, data }: NodeProps) {
         </div>
       </InfoTip>
       <div className={styles.plainEnglish}>{estimand.plainEnglish}</div>
-      <div className={styles.doNotation}>{estimand.doNotation}</div>
+      <div className={styles.doNotationRow}>
+        <div className={styles.doNotation}>{estimand.doNotation}</div>
+        <button
+          className={styles.copyButton}
+          onClick={handleCopy}
+          title="Copy estimand"
+        >
+          {copied ? '\u2713' : '\u2398'}
+        </button>
+      </div>
 
       {/* ── Generate Model section ── */}
       {!hasModel && !showAnalysis && (

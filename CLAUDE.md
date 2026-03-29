@@ -156,6 +156,14 @@ Lecture-driven development: follow along with McElreath's Statistical Rethinking
 23. ✅ Default prior specification with educational tooltips (editable per parameter)
 24. ✅ Automated test suite (10 reference DAGs, d-separation + prior generation tests)
 25. ✅ Minimal adjustment set algorithm + non-standard path handling
+26. ✅ About panel on title click (estimand etymology + course link)
+
+## Prior Wizard (standalone, pending integration)
+A separate app in `../prior-wizard/` that walks users through setting Bayesian priors step by step. Currently standalone; integration plan is documented in ROADMAP.md §2.1. Key design decisions:
+- ☰ hamburger menu next to title opens a left side panel (pushes canvas, doesn't overlay)
+- Model card priors section gets "click to edit directly, or use the Prior Wizard"
+- Wizard pre-fills from estimand context (variable names, types, family)
+- Wizard component accepts props and returns priors via callback
 
 ## Architecture Notes
 - `history.ts` — HistoryManager class with pause/resume to prevent recursive snapshots during undo/redo apply
