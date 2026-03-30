@@ -55,6 +55,15 @@ The Prior Wizard is a standalone app (`../prior-wizard/`) that walks users throu
 - Which variable is treatment vs outcome (from estimand)
 - The DAG stays visible while setting priors
 
+**Prior Wizard TODOs before integration:**
+- [ ] Add intercept (α) editors for logit/log link families (currently only Gaussian has one)
+- [ ] Clarify standardized cards for logit/log links (show treatment in SD units, explain what changes vs stays the same)
+- [ ] Add axis labels to distribution plots (log/logit scale) + optional "show on natural scale" view
+- [ ] Validate proportion inputs (clamp 0–1 for Beta/Bernoulli outcomes)
+- [ ] Explain why ordinal/categorical intercepts aren't user-editable (fixed priors with rationale)
+- [ ] Add test suite for `computeScaledPriors` (all 7 families × 3 scales, edge cases)
+- [ ] Replace boilerplate README with project-specific docs
+
 **Why:** Statistical Rethinking is fundamentally Bayesian; priors are modeling decisions, not defaults to ignore
 
 ### 2.2 Simulation loop
@@ -96,7 +105,14 @@ Features that extend beyond the backdoor criterion.
 - Show how different causal assumptions lead to different models
 - "What if this arrow doesn't exist?" exploration
 
-### 3.4 Multilevel & multivariate models
+### 3.4 Treatment variable type support
+- Currently the Prior Wizard and model generation assume a continuous predictor
+- Supporting categorical/binary/ordinal treatments changes slope interpretation entirely: β becomes a group difference (treatment vs control) instead of a per-unit rate
+- Requires: treatment type selector in Prior Wizard, conditional slope framing ("group A vs group B" instead of "per unit increase"), interaction handling for categorical × categorical, dummy/contrast coding options
+- Affects both standalone Prior Wizard and integrated Estiplan model cards
+- **Why:** Most experimental designs have categorical treatments (treatment/control, drug A/B/placebo); continuous-only is a significant limitation for real-world use
+
+### 3.5 Multilevel & multivariate models
 - Varying effects: `(1 + x | group)` syntax in brms
 - Multivariate: `bf()` syntax for joint outcome models
 - Relevant for mediation analysis and hierarchical data

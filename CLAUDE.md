@@ -165,6 +165,24 @@ A separate app in `../prior-wizard/` that walks users through setting Bayesian p
 - Wizard pre-fills from estimand context (variable names, types, family)
 - Wizard component accepts props and returns priors via callback
 
+### Prior Wizard current status
+- Supports all 7 outcome families (Gaussian, Log-Normal, Beta, Bernoulli, Poisson, Ordinal, Categorical)
+- Three prior views: natural, centered, standardized (with interactive slope editors + confidence bounds)
+- localStorage persistence with auto-save
+- Gaussian/identity link is fully polished; logit/log links functional but need UX work
+- Gaussian vs Log-Normal framed as additive vs multiplicative effects
+- Log-normal effects shown as percentage change
+- Currently assumes continuous predictor (categorical treatment support is a Tier 3 goal)
+
+### Prior Wizard remaining TODOs
+- Intercept (α) editors for logit/log links (only identity link has one currently)
+- Standardized card clarity for logit/log (show treatment in SD units)
+- Distribution plot axis labels (log/logit) + optional natural-scale view
+- Input validation for bounded families (proportions 0–1)
+- Explanation for non-editable ordinal/categorical intercepts
+- Test suite for `computeScaledPriors` (7 families × 3 scales)
+- Replace boilerplate README
+
 ## Architecture Notes
 - `history.ts` — HistoryManager class with pause/resume to prevent recursive snapshots during undo/redo apply
 - `wouldCreateCycle()` in pathfinding.ts — BFS from target to check reachability of source before adding edge
@@ -186,4 +204,5 @@ A separate app in `../prior-wizard/` that walks users through setting Bayesian p
 - ⬜ Multiple generative models comparison
 - ⬜ Multilevel models (varying effects syntax in brms)
 - ⬜ Multivariate models (bf() syntax in brms)
+- ⬜ Treatment variable type support (categorical/binary predictors — changes slope interpretation)
 - See ROADMAP.md for the full prioritized roadmap
