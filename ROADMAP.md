@@ -72,13 +72,7 @@ The Prior Wizard is a standalone app (`../prior-wizard/`) that walks users throu
 - Enables "simulate → fit → recover" workflow
 - **Why:** McElreath's "test before you invest" — verify the model recovers known causal effects before using real data
 
-### 2.3 Mutilated DAG view
-- When hovering/selecting an estimand, gray out arrows into the treatment variable
-- Visualizes what `do(X)` means graphically
-- Purely visual — d-separation engine already exists
-- **Why:** Bridges the gap between notation and intuition
-
-### 2.4 Full R script export
+### 2.3 Full R script export
 - Assemble all model cards into one complete script
 - Include: library loads, data prep, priors, model fitting, posterior checks
 - Match the simulation approach McElreath teaches (simulate intervention, compute contrast)

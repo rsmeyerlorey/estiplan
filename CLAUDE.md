@@ -198,7 +198,6 @@ A separate app in `../prior-wizard/` that walks users through setting Bayesian p
 - ✅ A07: Complete d-separation (pipe, collider, descendant) + backdoor criterion + split cards + Table Two Fallacy
 - ✅ Prior specification UI (default priors with educational tooltips, editable)
 - ⬜ A08+: Continue with lectures (sensitivity analysis, measurement error, missing data, etc.)
-- ⬜ Mutilated DAG view (grayed arrows on intervention)
 - ⬜ Full R script export
 - ⬜ Synthetic data simulation & testing loop
 - ⬜ Multiple generative models comparison
