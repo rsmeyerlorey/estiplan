@@ -757,34 +757,29 @@ describe('11 — Predictor type handling in brms code', () => {
 
   // ── Data prep comment ──
 
-  it('includes scale() for continuous predictors in data prep', () => {
+  it('includes standardize comment for continuous predictors', () => {
     const outcome = getVariable(dag, 'v_outcome_gauss');
     const treatment = getVariable(dag, 'v_tx_cont');
     const model = generateModel(outcome, treatment, 'total', [], false);
 
-    expect(model.brmsCode).toContain('scale(rainfall)');
     expect(model.brmsCode).toContain('# Standardize continuous predictors before fitting');
   });
 
-  it('includes factor variable comment in data prep', () => {
+  it('includes factor coding comment for factor-only predictors', () => {
     const outcome = getVariable(dag, 'v_outcome_gauss');
     const treatment = getVariable(dag, 'v_tx_cat');
     const model = generateModel(outcome, treatment, 'total', [], false);
 
-    expect(model.brmsCode).toContain('# Factor variables');
-    expect(model.brmsCode).toContain('site_type: categorical');
-    expect(model.brmsCode).toContain('dummy coding');
+    expect(model.brmsCode).toContain('# brms handles dummy coding for factor variables');
   });
 
-  it('includes both scale() and factor comment for mixed predictors', () => {
+  it('includes both standardize and factor comment for mixed predictors', () => {
     const outcome = getVariable(dag, 'v_outcome_gauss');
     const treatment = getVariable(dag, 'v_tx_cont');
     const adjCat = getVariable(dag, 'v_adj_cat');
     const model = generateModel(outcome, treatment, 'total', [adjCat], false);
 
-    expect(model.brmsCode).toContain('scale(rainfall)');
-    expect(model.brmsCode).toContain('# Factor variables');
-    expect(model.brmsCode).toContain('region: categorical');
+    expect(model.brmsCode).toContain('# Standardize continuous predictors before fitting; brms handles factor coding');
   });
 
   // ── Interaction with factor treatment ──

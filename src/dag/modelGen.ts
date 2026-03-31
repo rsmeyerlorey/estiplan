@@ -178,23 +178,11 @@ export function generateModel(
 
   const prepLines: string[] = [];
   if (continuousPreds.length > 0 && factorPreds.length > 0) {
-    prepLines.push('# Standardize continuous predictors; factor variables are handled by brms');
-    const cNames = continuousPreds.map((v) => rName(v.name));
-    prepLines.push(
-      `d <- d |> mutate(${cNames.map((n) => `${n} = scale(${n})`).join(', ')})`,
-    );
-    const fNote = factorPreds.map((v) => `${rName(v.name)}: ${v.variableType}`).join(', ');
-    prepLines.push(`# Factor variables (${fNote}) — brms handles dummy coding`);
+    prepLines.push('# Standardize continuous predictors before fitting; brms handles factor coding');
   } else if (continuousPreds.length > 0) {
     prepLines.push('# Standardize continuous predictors before fitting');
-    const cNames = continuousPreds.map((v) => rName(v.name));
-    prepLines.push(
-      `d <- d |> mutate(${cNames.map((n) => `${n} = scale(${n})`).join(', ')})`,
-    );
   } else if (factorPreds.length > 0) {
-    const fNote = factorPreds.map((v) => `${rName(v.name)}: ${v.variableType}`).join(', ');
-    prepLines.push(`# Factor variables (${fNote}) — brms handles dummy coding`);
-    prepLines.push('# No continuous predictors to standardize');
+    prepLines.push('# brms handles dummy coding for factor variables');
   }
   prepLines.push('');
 
