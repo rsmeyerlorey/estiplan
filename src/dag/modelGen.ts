@@ -35,6 +35,24 @@ function rName(name: string): string {
 }
 
 /**
+ * Whether a predictor variable needs factor() wrapping in brms.
+ * Categorical, binary, and ordinal predictors need explicit factor coding
+ * so brms generates the correct dummy/contrast coefficients.
+ */
+function needsFactor(type: VariableType): boolean {
+  return type === 'categorical' || type === 'binary' || type === 'ordinal';
+}
+
+/**
+ * Format a predictor variable for a brms formula.
+ * Wraps categorical/binary/ordinal in factor(); leaves continuous as-is.
+ */
+function formulaName(v: Variable): string {
+  const name = rName(v.name);
+  return needsFactor(v.variableType) ? `factor(${name})` : name;
+}
+
+/**
  * Result of model generation.
  */
 export interface GeneratedModel {
@@ -74,10 +92,8 @@ export function generateModel(
   // Build predictor list
   const predictors = [treatment, ...conditionOn];
 
-  // Determine if treatment is categorical-like
-  const treatmentIsCategorical =
-    treatment.variableType === 'categorical' ||
-    treatment.variableType === 'binary';
+  // Determine if treatment is factor-like (categorical, binary, or ordinal)
+  const treatmentIsCategorical = needsFactor(treatment.variableType);
 
   // ── Math notation ──
 
@@ -105,7 +121,7 @@ export function generateModel(
     const betaIdx = idx + (treatmentIsCategorical ? 1 : 2);
     const betaSubscript = subscriptNumber(betaIdx);
 
-    if (v.variableType === 'categorical' || v.variableType === 'binary') {
+    if (needsFactor(v.variableType)) {
       muParts.push(`\u03b3[${vShort}\u1d62]`);
     } else if (interaction) {
       if (treatmentIsCategorical) {
@@ -130,17 +146,18 @@ export function generateModel(
 
   const formulaParts: string[] = [];
 
-  // Treatment term
-  formulaParts.push(treatmentR);
+  // Treatment term (wrap in factor() if categorical/binary/ordinal)
+  const treatmentFormula = formulaName(treatment);
+  formulaParts.push(treatmentFormula);
 
   // Conditioned variables
   for (const v of conditionOn) {
-    const vR = rName(v.name);
+    const vFormula = formulaName(v);
     if (interaction) {
-      // Interaction: treatment:variable (works for both categorical and continuous)
-      formulaParts.push(`${treatmentR}:${vR}`);
+      // Interaction: treatment:variable (works for both factor and continuous)
+      formulaParts.push(`${treatmentFormula}:${vFormula}`);
     } else {
-      formulaParts.push(vR);
+      formulaParts.push(vFormula);
     }
   }
 
@@ -155,7 +172,26 @@ export function generateModel(
     return `  set_prior("${p.prior}", class = "${p.class}"${coefArg})`;
   });
 
+  // ── Data prep comment ──
+  const continuousPreds = predictors.filter((v) => !needsFactor(v.variableType));
+  const factorPreds = predictors.filter((v) => needsFactor(v.variableType));
+
+  const prepLines: string[] = [];
+  prepLines.push('# Priors assume standardized continuous predictors');
+  if (continuousPreds.length > 0) {
+    const cNames = continuousPreds.map((v) => rName(v.name));
+    prepLines.push(
+      `d <- d |> mutate(${cNames.map((n) => `${n} = scale(${n})`).join(', ')})`,
+    );
+  }
+  if (factorPreds.length > 0) {
+    const fNote = factorPreds.map((v) => `${rName(v.name)}: ${v.variableType}`).join(', ');
+    prepLines.push(`# Factor variables (${fNote}) — brms handles dummy coding`);
+  }
+  prepLines.push('');
+
   const brmsCodeLines = [
+    ...prepLines,
     `brm(${formula},`,
     `    data = d,`,
     `    family = ${family},`,
@@ -196,7 +232,10 @@ function generateDefaultPriors(
 
   // Determine link scale for slope priors
   const usesLogitLink =
-    outcomeType === 'binary' || outcomeType === 'ordinal';
+    outcomeType === 'binary' ||
+    outcomeType === 'ordinal' ||
+    outcomeType === 'proportion' ||
+    outcomeType === 'categorical';
   const usesLogLink =
     outcomeType === 'count' || outcomeType === 'positive-continuous';
 
@@ -240,10 +279,10 @@ function generateDefaultPriors(
       ? 'On the log scale, Normal(0, 0.5) means a 1-SD change in the predictor multiplies the outcome by at most about exp(\u00b11) \u2248 0.37 to 2.7. Mildly regularizing \u2014 it allows moderately strong effects but is skeptical of any single predictor changing the outcome by orders of magnitude.'
       : 'For standardized data, Normal(0, 0.5) means a 1-SD change in the predictor changes the outcome by at most about \u00b11 SD. Weakly regularizing \u2014 it says you don\u2019t expect any single predictor to have a huge effect, but doesn\u2019t rule it out.';
 
-  const treatmentIsCategorical =
-    treatment.variableType === 'categorical' || treatment.variableType === 'binary';
+  const treatmentIsFactor = needsFactor(treatment.variableType);
 
-  if (!treatmentIsCategorical) {
+  // Continuous predictors get coef-specific priors
+  if (!treatmentIsFactor) {
     priors.push({
       class: 'b',
       coef: rName(treatment.name),
@@ -254,8 +293,7 @@ function generateDefaultPriors(
   }
 
   for (const v of conditionOn) {
-    const isCat = v.variableType === 'categorical' || v.variableType === 'binary';
-    if (!isCat) {
+    if (!needsFactor(v.variableType)) {
       const coef = interaction
         ? `${rName(treatment.name)}:${rName(v.name)}`
         : rName(v.name);
@@ -271,6 +309,28 @@ function generateDefaultPriors(
         tooltip: roleTooltip,
       });
     }
+  }
+
+  // Factor (categorical/binary/ordinal) predictors: class-level prior
+  // brms generates multiple dummy coefficients per factor variable with
+  // unpredictable names (e.g., "factor(group)levelB"). A class-level prior
+  // applies to all b-class coefficients not covered by coef-specific priors.
+  const factorPredictors = [treatment, ...conditionOn].filter((v) =>
+    needsFactor(v.variableType),
+  );
+  if (factorPredictors.length > 0) {
+    const factorNames = factorPredictors.map((v) => v.name).join(', ');
+    const factorShorts = factorPredictors.map((v) => v.shorthand).join(', ');
+    priors.push({
+      class: 'b',
+      coef: '',
+      prior: slopePrior,
+      label: `\u03b2 [${factorShorts}] (factor levels)`,
+      tooltip:
+        `Class-level prior for factor variable coefficients (${factorNames}). ` +
+        `Each level gets its own coefficient representing the difference from the reference level. ` +
+        slopeTooltip,
+    });
   }
 
   // Scale / dispersion parameter

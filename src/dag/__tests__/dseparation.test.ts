@@ -500,7 +500,7 @@ describe('brms code — Waffle Divorce', () => {
 
     const model = generateModel(outcome, treatment, 'total', conditionOn, false);
 
-    expect(model.brmsCode).toContain('divorce_rate ~ marriage_rate + age_at_marriage + south');
+    expect(model.brmsCode).toContain('divorce_rate ~ marriage_rate + age_at_marriage + factor(south)');
     expect(model.family).toBe('gaussian()');
   });
 
@@ -510,7 +510,300 @@ describe('brms code — Waffle Divorce', () => {
 
     const model = generateModel(outcome, treatment, 'total', [], false);
 
-    expect(model.brmsCode).toContain('divorce_rate ~ south');
+    expect(model.brmsCode).toContain('divorce_rate ~ factor(south)');
     expect(model.family).toBe('gaussian()');
+  });
+});
+
+// ── Test 11: Predictor Variable Types ──
+
+describe('11 — Predictor type handling in brms code', () => {
+  const dag = loadDag('11-predictor-types.estiplan.json');
+
+  // ── factor() wrapping ──
+
+  it('wraps binary treatment in factor()', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_bin');
+    const model = generateModel(outcome, treatment, 'total', [], false);
+    expect(model.brmsCode).toContain('factor(treatment_group)');
+  });
+
+  it('wraps categorical treatment in factor()', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_cat');
+    const model = generateModel(outcome, treatment, 'total', [], false);
+    expect(model.brmsCode).toContain('factor(site_type)');
+  });
+
+  it('wraps ordinal treatment in factor()', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_ord');
+    const model = generateModel(outcome, treatment, 'total', [], false);
+    expect(model.brmsCode).toContain('factor(severity)');
+  });
+
+  it('does NOT wrap continuous treatment in factor()', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_cont');
+    const model = generateModel(outcome, treatment, 'total', [], false);
+    expect(model.brmsCode).toContain('elevation ~ rainfall');
+    expect(model.brmsCode).not.toContain('factor(rainfall)');
+  });
+
+  it('does NOT wrap count treatment in factor()', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_count');
+    const model = generateModel(outcome, treatment, 'total', [], false);
+    expect(model.brmsCode).not.toContain('factor(occupants)');
+  });
+
+  it('does NOT wrap proportion treatment in factor()', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_prop');
+    const model = generateModel(outcome, treatment, 'total', [], false);
+    expect(model.brmsCode).not.toContain('factor(temper_ratio)');
+  });
+
+  it('does NOT wrap positive-continuous treatment in factor()', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_poscon');
+    const model = generateModel(outcome, treatment, 'total', [], false);
+    expect(model.brmsCode).not.toContain('factor(distance)');
+  });
+
+  // ── factor() for adjustment variables ──
+
+  it('wraps categorical adjustment in factor()', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_cont');
+    const adjCat = getVariable(dag, 'v_adj_cat');
+    const model = generateModel(outcome, treatment, 'total', [adjCat], false);
+    expect(model.brmsCode).toContain('factor(region)');
+  });
+
+  it('wraps binary adjustment in factor()', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_cont');
+    const adjBin = getVariable(dag, 'v_adj_bin');
+    const model = generateModel(outcome, treatment, 'total', [adjBin], false);
+    expect(model.brmsCode).toContain('factor(urban)');
+  });
+
+  it('does NOT wrap continuous adjustment in factor()', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_cont');
+    const adjCont = getVariable(dag, 'v_adj_cont');
+    const model = generateModel(outcome, treatment, 'total', [adjCont], false);
+    expect(model.brmsCode).toContain('rainfall + depth');
+    expect(model.brmsCode).not.toContain('factor(depth)');
+  });
+
+  // ── Mixed factor + continuous predictors ──
+
+  it('handles mixed factor treatment + continuous adjustment', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_bin');
+    const adjCont = getVariable(dag, 'v_adj_cont');
+    const model = generateModel(outcome, treatment, 'total', [adjCont], false);
+    expect(model.brmsCode).toContain('factor(treatment_group) + depth');
+  });
+
+  it('handles continuous treatment + factor adjustment', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_cont');
+    const adjCat = getVariable(dag, 'v_adj_cat');
+    const adjCont = getVariable(dag, 'v_adj_cont');
+    const model = generateModel(outcome, treatment, 'total', [adjCat, adjCont], false);
+    expect(model.brmsCode).toContain('rainfall + factor(region) + depth');
+  });
+
+  // ── Priors ──
+
+  it('generates class-level b prior for factor treatment', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_cat');
+    const model = generateModel(outcome, treatment, 'total', [], false);
+
+    // Should have a class-level b prior (no coef) for factor levels
+    const factorPrior = model.priors.find(
+      (p) => p.class === 'b' && p.coef === '',
+    );
+    expect(factorPrior).toBeDefined();
+    expect(factorPrior!.label).toContain('factor levels');
+
+    // Should NOT have a coef-specific b prior for the treatment
+    const coefPrior = model.priors.find(
+      (p) => p.class === 'b' && p.coef === 'site_type',
+    );
+    expect(coefPrior).toBeUndefined();
+  });
+
+  it('generates coef-specific prior for continuous treatment', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_cont');
+    const model = generateModel(outcome, treatment, 'total', [], false);
+
+    const coefPrior = model.priors.find(
+      (p) => p.class === 'b' && p.coef === 'rainfall',
+    );
+    expect(coefPrior).toBeDefined();
+
+    // No class-level b prior (no factor variables)
+    const classPrior = model.priors.find(
+      (p) => p.class === 'b' && p.coef === '',
+    );
+    expect(classPrior).toBeUndefined();
+  });
+
+  it('generates both coef and class-level priors for mixed predictors', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_cont');
+    const adjCat = getVariable(dag, 'v_adj_cat');
+    const model = generateModel(outcome, treatment, 'total', [adjCat], false);
+
+    // Continuous treatment gets coef-specific prior
+    const coefPrior = model.priors.find(
+      (p) => p.class === 'b' && p.coef === 'rainfall',
+    );
+    expect(coefPrior).toBeDefined();
+
+    // Categorical adjustment gets class-level prior
+    const classPrior = model.priors.find(
+      (p) => p.class === 'b' && p.coef === '',
+    );
+    expect(classPrior).toBeDefined();
+    expect(classPrior!.label).toContain('Rg');
+  });
+
+  // ── Correct priors per outcome family with factor treatment ──
+
+  it('binary outcome + binary treatment → logit priors + factor()', () => {
+    const outcome = getVariable(dag, 'v_outcome_bern');
+    const treatment = getVariable(dag, 'v_tx_bin');
+    const model = generateModel(outcome, treatment, 'total', [], false);
+
+    expect(model.brmsCode).toContain('factor(treatment_group)');
+    expect(model.family).toBe('bernoulli()');
+
+    const intPrior = model.priors.find((p) => p.class === 'Intercept');
+    expect(intPrior!.prior).toBe('normal(0, 1.5)');
+    expect(intPrior!.label).toContain('logit');
+
+    const factorPrior = model.priors.find((p) => p.class === 'b' && p.coef === '');
+    expect(factorPrior!.prior).toBe('normal(0, 1)');
+  });
+
+  it('count outcome + continuous treatment → log priors', () => {
+    const outcome = getVariable(dag, 'v_outcome_pois');
+    const treatment = getVariable(dag, 'v_tx_cont');
+    const model = generateModel(outcome, treatment, 'total', [], false);
+
+    expect(model.family).toBe('poisson()');
+    const intPrior = model.priors.find((p) => p.class === 'Intercept');
+    expect(intPrior!.prior).toBe('normal(0, 1)');
+    expect(intPrior!.label).toContain('log');
+  });
+
+  it('lognormal outcome + categorical treatment → log priors + factor()', () => {
+    const outcome = getVariable(dag, 'v_outcome_logn');
+    const treatment = getVariable(dag, 'v_tx_cat');
+    const model = generateModel(outcome, treatment, 'total', [], false);
+
+    expect(model.brmsCode).toContain('factor(site_type)');
+    expect(model.family).toBe('lognormal()');
+
+    const intPrior = model.priors.find((p) => p.class === 'Intercept');
+    expect(intPrior!.prior).toBe('normal(0, 1)');
+  });
+
+  it('proportion outcome + continuous treatment → logit priors + phi', () => {
+    const outcome = getVariable(dag, 'v_outcome_beta');
+    const treatment = getVariable(dag, 'v_tx_cont');
+    const model = generateModel(outcome, treatment, 'total', [], false);
+
+    expect(model.family).toBe('Beta()');
+    const intPrior = model.priors.find((p) => p.class === 'Intercept');
+    expect(intPrior!.prior).toBe('normal(0, 1.5)');
+    expect(intPrior!.label).toContain('logit');
+
+    const phiPrior = model.priors.find((p) => p.class === 'phi');
+    expect(phiPrior).toBeDefined();
+  });
+
+  it('ordinal outcome + categorical treatment → logit priors + factor()', () => {
+    const outcome = getVariable(dag, 'v_outcome_ord');
+    const treatment = getVariable(dag, 'v_tx_cat');
+    const model = generateModel(outcome, treatment, 'total', [], false);
+
+    expect(model.brmsCode).toContain('factor(site_type)');
+    expect(model.family).toBe('cumulative("logit")');
+
+    const intPrior = model.priors.find((p) => p.class === 'Intercept');
+    expect(intPrior!.prior).toBe('normal(0, 1.5)');
+  });
+
+  it('categorical outcome + binary treatment → logit priors + factor()', () => {
+    const outcome = getVariable(dag, 'v_outcome_cat');
+    const treatment = getVariable(dag, 'v_tx_bin');
+    const model = generateModel(outcome, treatment, 'total', [], false);
+
+    expect(model.brmsCode).toContain('factor(treatment_group)');
+    expect(model.family).toBe('categorical()');
+
+    const intPrior = model.priors.find((p) => p.class === 'Intercept');
+    expect(intPrior!.prior).toBe('normal(0, 1.5)');
+  });
+
+  // ── Data prep comment ──
+
+  it('includes scale() for continuous predictors in data prep', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_cont');
+    const model = generateModel(outcome, treatment, 'total', [], false);
+
+    expect(model.brmsCode).toContain('scale(rainfall)');
+    expect(model.brmsCode).toContain('# Priors assume standardized');
+  });
+
+  it('includes factor variable comment in data prep', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_cat');
+    const model = generateModel(outcome, treatment, 'total', [], false);
+
+    expect(model.brmsCode).toContain('# Factor variables');
+    expect(model.brmsCode).toContain('site_type: categorical');
+    expect(model.brmsCode).toContain('dummy coding');
+  });
+
+  it('includes both scale() and factor comment for mixed predictors', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_cont');
+    const adjCat = getVariable(dag, 'v_adj_cat');
+    const model = generateModel(outcome, treatment, 'total', [adjCat], false);
+
+    expect(model.brmsCode).toContain('scale(rainfall)');
+    expect(model.brmsCode).toContain('# Factor variables');
+    expect(model.brmsCode).toContain('region: categorical');
+  });
+
+  // ── Interaction with factor treatment ──
+
+  it('interaction: factor treatment × continuous adjustment', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_bin');
+    const adjCont = getVariable(dag, 'v_adj_cont');
+    const model = generateModel(outcome, treatment, 'total', [adjCont], true);
+
+    expect(model.brmsCode).toContain('factor(treatment_group):depth');
+  });
+
+  it('interaction: continuous treatment × factor adjustment', () => {
+    const outcome = getVariable(dag, 'v_outcome_gauss');
+    const treatment = getVariable(dag, 'v_tx_cont');
+    const adjCat = getVariable(dag, 'v_adj_cat');
+    const model = generateModel(outcome, treatment, 'total', [adjCat], true);
+
+    expect(model.brmsCode).toContain('rainfall:factor(region)');
   });
 });
