@@ -763,7 +763,7 @@ describe('11 — Predictor type handling in brms code', () => {
     const model = generateModel(outcome, treatment, 'total', [], false);
 
     expect(model.brmsCode).toContain('scale(rainfall)');
-    expect(model.brmsCode).toContain('# Priors assume standardized');
+    expect(model.brmsCode).toContain('# Standardize continuous predictors before fitting');
   });
 
   it('includes factor variable comment in data prep', () => {
