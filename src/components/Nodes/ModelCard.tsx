@@ -12,6 +12,7 @@ import {
   badControlLabel,
 } from '../../dag/explanations';
 import { InfoTip } from './InfoTip';
+import { emitOpenWizard } from '../../prior-wizard/wizardEvents';
 import styles from './ModelCard.module.css';
 
 /**
@@ -129,6 +130,21 @@ function ModelCardComponent({ id, data }: NodeProps) {
     }
     setEditingPriorIdx(null);
   }, [id, editingPriorIdx, editingPriorValue, updateModelPrior, variables]);
+
+  const handleOpenWizard = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      const outcome = variables.get(model.targetId);
+      const source = variables.get(model.sourceId);
+      emitOpenWizard({
+        modelId: id,
+        outcomeName: outcome?.name || '',
+        treatmentName: source?.name || '',
+        outcomeFamily: outcome?.variableType || 'continuous',
+      });
+    },
+    [id, model.targetId, model.sourceId, variables],
+  );
 
   const hasConditionedVars =
     model.conditionedOn.length > 0 || model.excludedMediators.length > 0;
@@ -272,11 +288,17 @@ function ModelCardComponent({ id, data }: NodeProps) {
           {showPriors && (
             <>
               <div className={styles.priorsNote}>
-                Assumes centered &amp; standardized predictors. Click a prior to edit.
+                Click a prior to edit directly, or use the wizard to explore what they mean.
               </div>
+              <button
+                className={`${styles.wizardButton} nodrag nopan`}
+                onClick={handleOpenWizard}
+              >
+                Open Prior Wizard
+              </button>
               <div className={styles.priorsList}>
                 {model.priors.map((p, idx) => (
-                  <div key={idx} className={styles.priorItem}>
+                  <div key={`${p.class}-${p.coef}`} className={styles.priorItem}>
                     <InfoTip text={p.tooltip || ''}>
                       <span className={styles.priorLabel}>{p.label}</span>
                     </InfoTip>

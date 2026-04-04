@@ -1,0 +1,54 @@
+/**
+ * Theme bridge: maps Prior Wizard's --pw-* CSS variables
+ * from Estiplan's --estiplan-* theme variables.
+ *
+ * This file is imported by the PriorWizardPanel wrapper,
+ * scoped inside .prior-wizard-panel so it only affects the wizard.
+ */
+
+.prior-wizard-panel {
+  /* Surface colors */
+  --pw-bg: var(--estiplan-bg);
+  --pw-surface: var(--estiplan-card-bg);
+  --pw-surface-raised: var(--estiplan-menu-bg);
+  --pw-border: var(--estiplan-card-border);
+
+  /* Text */
+  --pw-text: var(--estiplan-card-text);
+  --pw-text-muted: var(--estiplan-node-subtext);
+  --pw-text-dim: var(--estiplan-node-subtext);
+
+  /* Accent */
+  --pw-accent: #5b8af5;
+  --pw-accent-hover: #7aa2ff;
+  --pw-green: #4caf50;
+  --pw-orange: #e6a817;
+  --pw-red: #f55b5b;
+
+  /* Typography */
+  --pw-font: var(--estiplan-font);
+  --pw-font-mono: 'Fira Code', 'Consolas', monospace;
+  --pw-font-math: 'Cambria Math', 'Latin Modern Math', Georgia, serif;
+
+  /* Shape */
+  --pw-radius: 8px;
+  --pw-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+
+  /* Panel layout */
+  font-family: var(--pw-font);
+  color: var(--pw-text);
+  background: var(--pw-surface);
+  line-height: 1.6;
+  overflow-y: auto;
+  height: 100%;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}

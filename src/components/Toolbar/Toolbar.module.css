@@ -22,47 +22,6 @@
   user-select: none;
 }
 
-.title:hover {
-  opacity: 0.8;
-}
-
-.aboutPanel {
-  position: absolute;
-  top: calc(100% + 12px);
-  left: 0;
-  width: 320px;
-  padding: 16px 20px;
-  background: var(--estiplan-menu-bg);
-  border: 1px solid var(--estiplan-menu-border);
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  z-index: 100;
-}
-
-.aboutBlurb {
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--estiplan-menu-text);
-  margin: 0 0 10px 0;
-}
-
-.aboutMeta {
-  font-size: 11px;
-  color: var(--estiplan-node-subtext);
-  margin: 12px 0 0 0;
-  padding-top: 10px;
-  border-top: 1px solid var(--estiplan-menu-border);
-}
-
-.aboutLink {
-  color: var(--estiplan-edge-highlight);
-  text-decoration: none;
-}
-
-.aboutLink:hover {
-  text-decoration: underline;
-}
-
 .btn {
   padding: 6px 14px;
   background: var(--estiplan-btn-bg);
@@ -93,6 +52,12 @@
 
 .spacer {
   flex: 1;
+}
+
+.hamburger {
+  font-size: 16px;
+  padding: 6px 10px;
+  line-height: 1;
 }
 
 .addInput {

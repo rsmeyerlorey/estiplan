@@ -6,3 +6,117 @@
   background: var(--estiplan-bg);
   overflow: hidden;
 }
+
+.mainArea {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.sidePanel {
+  height: 100%;
+  border-right: 1px solid var(--estiplan-toolbar-border);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.canvasArea {
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Drag handle on right edge of side panel */
+.resizeHandle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 5px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 20;
+  background: transparent;
+}
+
+.resizeHandle:hover,
+.resizeHandle:active {
+  background: var(--estiplan-edge-highlight);
+  opacity: 0.4;
+}
+
+/* Menu content (about blurb + wizard launcher) */
+.menuContent {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.aboutBlurb {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--estiplan-card-text);
+  margin: 0;
+}
+
+.aboutMeta {
+  font-size: 11px;
+  color: var(--estiplan-node-subtext);
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--estiplan-card-border);
+}
+
+.aboutLink {
+  color: var(--estiplan-edge-highlight);
+  text-decoration: none;
+}
+
+.aboutLink:hover {
+  text-decoration: underline;
+}
+
+.wizardLauncher {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--estiplan-card-bg);
+  border: 1px solid var(--estiplan-card-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: left;
+  color: var(--estiplan-card-text);
+  font-family: var(--estiplan-font);
+}
+
+.wizardLauncher:hover {
+  border-color: var(--estiplan-edge-highlight);
+  background: var(--estiplan-btn-hover);
+}
+
+.wizardLauncherText {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.wizardLauncherSub {
+  font-size: 11px;
+  color: var(--estiplan-node-subtext);
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+/* Flash animation for priors applied */
+@keyframes priorsApplied {
+  0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.5); }
+  50% { box-shadow: 0 0 12px 4px rgba(76, 175, 80, 0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+}
