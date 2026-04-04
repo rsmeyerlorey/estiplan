@@ -508,6 +508,33 @@ function SummaryStep({
         Now choose whether to use the widely accepted defaults or your adjusted values.
       </p>
 
+      {onPriorsReady && (
+        <div
+          className="form-guidance"
+          style={{
+            marginBottom: 12,
+            padding: '10px 12px',
+            background: 'var(--pw-surface-raised)',
+            borderLeft: '3px solid var(--pw-accent)',
+            borderRadius: 4,
+            fontSize: 12,
+          }}
+        >
+          {state.chosenScale === 'standardized' ? (
+            <>
+              This slope scale will apply to <strong>all standardized predictors</strong> in
+              the model (treatment and adjustment variables alike).
+            </>
+          ) : (
+            <>
+              This prior is in units specific to <strong>{treatmentName || 'the treatment'}</strong>,
+              so it will apply to that coefficient only. Adjustment variables will keep their
+              default priors.
+            </>
+          )}
+        </div>
+      )}
+
       {/* Standard defaults */}
       <div style={{ ...cardStyle, borderLeft: '4px solid var(--pw-green)' }}>
         <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--pw-text)', marginBottom: 4 }}>

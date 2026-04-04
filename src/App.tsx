@@ -139,13 +139,33 @@ function App() {
       store.updateModelPrior(modelId, interceptIdx, `normal(${fmt(priors.interceptMean)}, ${fmt(priors.interceptSD)})`, variables);
     }
 
-    // Update slope (treatment β — first "b" class prior)
-    // Re-read model after intercept update since updateModelPrior regenerates the model
-    const afterIntercept = useEstiplanStore.getState().models.find((m) => m.id === modelId);
-    if (afterIntercept) {
-      const slopeIdx = afterIntercept.priors.findIndex((p) => p.class === 'b');
-      if (slopeIdx >= 0) {
-        store.updateModelPrior(modelId, slopeIdx, `normal(${fmt(priors.slopeMean)}, ${fmt(priors.slopeSD)})`, variables);
+    // Update slope(s). If the user chose the standardized scale, the slope prior
+    // represents "effect per 1 SD" and applies equally to any standardized predictor,
+    // so propagate it to ALL b-class priors (treatment, adjustments, factor levels).
+    // For centered/natural scales, the prior is in units specific to the treatment,
+    // so only update the treatment's slope (first b-class prior).
+    const slopePriorString = `normal(${fmt(priors.slopeMean)}, ${fmt(priors.slopeSD)})`;
+    const propagateToAll = priors.scale === 'standardized';
+
+    if (propagateToAll) {
+      // Update every b-class prior. We must re-read the model each iteration because
+      // updateModelPrior regenerates the model (and its prior list).
+      let bIdx = 0;
+      while (true) {
+        const current = useEstiplanStore.getState().models.find((m) => m.id === modelId);
+        if (!current) break;
+        const nextIdx = current.priors.findIndex((p, i) => p.class === 'b' && i >= bIdx);
+        if (nextIdx < 0) break;
+        store.updateModelPrior(modelId, nextIdx, slopePriorString, variables);
+        bIdx = nextIdx + 1;
+      }
+    } else {
+      const afterIntercept = useEstiplanStore.getState().models.find((m) => m.id === modelId);
+      if (afterIntercept) {
+        const slopeIdx = afterIntercept.priors.findIndex((p) => p.class === 'b');
+        if (slopeIdx >= 0) {
+          store.updateModelPrior(modelId, slopeIdx, slopePriorString, variables);
+        }
       }
     }
 
@@ -222,8 +242,9 @@ function App() {
                   outcomeName={wizardContext?.outcomeName}
                   treatmentName={wizardContext?.treatmentName}
                   outcomeFamily={wizardContext?.outcomeFamily}
-                  onClose={handleBackToMenu}
-                  onPriorsReady={handlePriorsReady}
+                  onBack={handleBackToMenu}
+                  onClose={handleClosePanel}
+                  onPriorsReady={wizardContext ? handlePriorsReady : undefined}
                   priorsAppliedFlash={priorsAppliedFlash}
                 />
               )}

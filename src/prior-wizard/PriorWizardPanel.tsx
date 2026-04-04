@@ -12,9 +12,11 @@ interface Props {
   outcomeName?: string;
   treatmentName?: string;
   outcomeFamily?: Parameters<typeof PriorWizard>[0]['outcomeFamily'];
-  /** Called when user selects priors */
+  /** Called when user selects priors (undefined = no model to apply to) */
   onPriorsReady?: (priors: PriorResult) => void;
-  /** Close the panel (goes back to menu) */
+  /** Go back to the menu view */
+  onBack: () => void;
+  /** Close the entire side panel */
   onClose: () => void;
   /** Brief flash when priors were applied */
   priorsAppliedFlash?: boolean;
@@ -25,6 +27,7 @@ export function PriorWizardPanel({
   treatmentName,
   outcomeFamily,
   onPriorsReady,
+  onBack,
   onClose,
   priorsAppliedFlash,
 }: Props) {
@@ -33,7 +36,7 @@ export function PriorWizardPanel({
       {/* Panel header */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <button className={styles.backButton} onClick={onClose} title="Back to menu">
+          <button className={styles.backButton} onClick={onBack} title="Back to menu">
             &#x2190;
           </button>
           <span className={styles.headerTitle}>Prior Wizard</span>
@@ -59,9 +62,7 @@ export function PriorWizardPanel({
           outcomeName={outcomeName}
           treatmentName={treatmentName}
           outcomeFamily={outcomeFamily}
-          onPriorsReady={(priors) => {
-            onPriorsReady?.(priors);
-          }}
+          onPriorsReady={onPriorsReady}
         />
       </div>
     </div>
