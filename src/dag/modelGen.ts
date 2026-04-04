@@ -105,7 +105,8 @@ export function generateModel(
   const likelihoodDist = mathDistribution(outcome.variableType);
   mathLines.push(`${outcomeShort}\u1d62 ~ ${likelihoodDist}`);
 
-  // Line 2: linear model
+  // Line 2: linear model (use family-appropriate symbol / link)
+  const lpLhs = linearPredictorLhs(outcome.variableType);
   const muParts: string[] = [];
 
   if (treatmentIsCategorical) {
@@ -116,13 +117,27 @@ export function generateModel(
   }
 
   // Add conditioned variables
+  // Use a single running index across both β and γ so the sequence is continuous
+  // (e.g. β₁, β₂, γ₃, γ₄, β₅) rather than skipping numbers over factor terms.
   conditionOn.forEach((v, idx) => {
     const vShort = v.shorthand;
     const betaIdx = idx + (treatmentIsCategorical ? 1 : 2);
     const betaSubscript = subscriptNumber(betaIdx);
 
     if (needsFactor(v.variableType)) {
-      muParts.push(`\u03b3[${vShort}\u1d62]`);
+      // Factor adjustment: γ with its own subscript.
+      // When interaction is on, the factor level varies by treatment.
+      if (interaction && !treatmentIsCategorical) {
+        muParts.push(
+          `\u03b3${betaSubscript}[${treatmentShort}\u1d62, ${vShort}\u1d62]`,
+        );
+      } else if (interaction && treatmentIsCategorical) {
+        muParts.push(
+          `\u03b3${betaSubscript}[${treatmentShort}\u1d62, ${vShort}\u1d62]`,
+        );
+      } else {
+        muParts.push(`\u03b3${betaSubscript}[${vShort}\u1d62]`);
+      }
     } else if (interaction) {
       if (treatmentIsCategorical) {
         // Categorical treatment: slope subscripted by treatment
@@ -140,7 +155,7 @@ export function generateModel(
     }
   });
 
-  mathLines.push(`\u03bc\u1d62 = ${muParts.join(' + ')}`);
+  mathLines.push(`${lpLhs} = ${muParts.join(' + ')}`);
 
   // ── brms code ──
 
@@ -169,7 +184,7 @@ export function generateModel(
 
   const priorLines = priors.map((p) => {
     const coefArg = p.coef ? `, coef = "${p.coef}"` : '';
-    return `  set_prior("${p.prior}", class = "${p.class}"${coefArg})`;
+    return `      set_prior("${p.prior}", class = "${p.class}"${coefArg})`;
   });
 
   // ── Data prep comment ──
@@ -178,9 +193,9 @@ export function generateModel(
 
   const prepLines: string[] = [];
   if (continuousPreds.length > 0 && factorPreds.length > 0) {
-    prepLines.push('# Standardize continuous predictors before fitting; brms handles factor coding');
+    prepLines.push('# Standardize numeric predictors before fitting; brms handles factor coding');
   } else if (continuousPreds.length > 0) {
-    prepLines.push('# Standardize continuous predictors before fitting');
+    prepLines.push('# Standardize numeric predictors before fitting');
   } else if (factorPreds.length > 0) {
     prepLines.push('# brms handles dummy coding for factor variables');
   }
@@ -197,7 +212,7 @@ export function generateModel(
     priorLines.forEach((line, i) => {
       brmsCodeLines.push(line + (i < priorLines.length - 1 ? ',' : ''));
     });
-    brmsCodeLines.push(`    ))`);
+    brmsCodeLines.push(`    ))`);  // aligned under prior = c(
   } else {
     // Replace trailing comma on family line
     brmsCodeLines[brmsCodeLines.length - 1] = `    family = ${family})`;
@@ -237,12 +252,23 @@ function generateDefaultPriors(
 
   // Intercept prior
   if (usesLogitLink) {
+    // Categorical and ordinal have K−1 intercepts (one per non-reference category
+    // / one per threshold). brms applies a class-level Intercept prior to all of them.
+    let interceptLabel = '\u03b1 (intercept, logit scale)';
+    let interceptTip = 'On the logit scale, Normal(0, 1.5) places ~95% of the prior mass on baseline probabilities between about 5% and 95%. This is mildly regularizing \u2014 it rules out near-certainty (close to 0% or 100%) without being very informative about where the baseline falls.';
+    if (outcomeType === 'categorical') {
+      interceptLabel = '\u03b1\u2081\u2026\u03b1\u2096\u208B\u2081 (K\u22121 intercepts, logit scale)';
+      interceptTip = 'Categorical regression fits K\u22121 intercepts (one per non-reference category). This class-level prior applies to all of them. On the logit scale, Normal(0, 1.5) places ~95% of the prior mass on baseline category probabilities between about 5% and 95%.';
+    } else if (outcomeType === 'ordinal') {
+      interceptLabel = '\u03ba\u2081\u2026\u03ba\u2096\u208B\u2081 (K\u22121 thresholds, logit scale)';
+      interceptTip = 'Ordered-logit models use K\u22121 thresholds (cutpoints) on the latent logit scale. This class-level prior applies to all thresholds. Normal(0, 1.5) is weakly regularizing \u2014 it keeps cutpoints within a reasonable range without strongly constraining where the category boundaries fall.';
+    }
     priors.push({
       class: 'Intercept',
       coef: '',
       prior: 'normal(0, 1.5)',
-      label: '\u03b1 (intercept, logit scale)',
-      tooltip: 'On the logit scale, Normal(0, 1.5) places ~95% of the prior mass on baseline probabilities between about 5% and 95%. This is mildly regularizing \u2014 it rules out near-certainty (close to 0% or 100%) without being very informative about where the baseline falls.',
+      label: interceptLabel,
+      tooltip: interceptTip,
     });
   } else if (usesLogLink) {
     priors.push({
@@ -357,6 +383,30 @@ function generateDefaultPriors(
   }
 
   return priors;
+}
+
+/**
+ * Returns the LHS of the linear-predictor line for a given outcome family.
+ * This keeps the math notation consistent with each likelihood's parameterization
+ * (e.g. logit link for Bernoulli, log link for Poisson, φᵢ for ordinal, etc.).
+ */
+function linearPredictorLhs(type: VariableType): string {
+  switch (type) {
+    case 'binary':
+      return 'logit(\u03c0\u1d62)';
+    case 'proportion':
+      return 'logit(\u03bc\u1d62)';
+    case 'count':
+      return 'log(\u03bb\u1d62)';
+    case 'positive-continuous':
+      return '\u03bc\u1d62';
+    case 'ordinal':
+      return '\u03c6\u1d62';
+    case 'categorical':
+      return '\u03b7\u1d62\u208C\u2096'; // ηᵢ,ₖ (one per non-reference category)
+    default:
+      return '\u03bc\u1d62';
+  }
 }
 
 /**
