@@ -24,6 +24,8 @@ interface Props {
   showInterval?: boolean;
   /** Compact mode: smaller size for inline use in cards */
   compact?: boolean;
+  /** X-axis label (units/scale): e.g. "log-odds", "log units", "SD units", "value" */
+  xAxisLabel?: string;
 }
 
 const PADDING = { top: 8, right: 16, bottom: 28, left: 16 };
@@ -39,12 +41,17 @@ export function DistCurve({
   label,
   showInterval = true,
   compact = false,
+  xAxisLabel,
 }: Props) {
   // sd prop is an alias for param when type='normal'; param is used for exponential rate
   const effectiveParam = sd ?? param ?? 1;
   const width = widthProp ?? (compact ? 160 : 400);
-  const height = heightProp ?? (compact ? 80 : 140);
-  const pad = compact ? COMPACT_PADDING : PADDING;
+  const height = heightProp ?? (compact ? 80 : (xAxisLabel ? 156 : 140));
+  const pad = compact
+    ? COMPACT_PADDING
+    : xAxisLabel
+      ? { ...PADDING, bottom: 42 }
+      : PADDING;
   const plotW = width - pad.left - pad.right;
   const plotH = height - pad.top - pad.bottom;
 
@@ -136,6 +143,21 @@ export function DistCurve({
           stroke="rgba(224, 221, 213, 0.15)"
           strokeWidth={1}
         />
+
+        {/* X-axis label (units/scale) */}
+        {xAxisLabel && !compact && (
+          <text
+            x={pad.left + plotW / 2}
+            y={height - 2}
+            textAnchor="middle"
+            fontSize={9}
+            fill="rgba(128, 128, 128, 0.9)"
+            fontFamily="var(--pw-font, sans-serif)"
+            fontStyle="italic"
+          >
+            {xAxisLabel}
+          </text>
+        )}
 
         {/* X-axis ticks */}
         {xTicks.map((t, i) => (

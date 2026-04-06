@@ -216,6 +216,22 @@ export function StepThreeWays({ state, onChooseScale, onEffectTxChange, onEffect
                 {priors.label}
               </div>
 
+              {/* Scale-specific subtitle for logit/log links */}
+              {scale === 'standardized' && link !== 'identity' && (
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: color,
+                    marginBottom: 8,
+                    letterSpacing: 0.2,
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Outcome stays on {link} scale &middot; predictors in SD units
+                </div>
+              )}
+
               {/* When to use — right under header */}
               <div
                 style={{
@@ -478,6 +494,7 @@ function InterceptEditorLinkScale({
         marginBottom: 12,
         borderLeft: `3px solid ${color}`,
       }}>
+        <span style={{ marginRight: 6 }} aria-hidden="true">&#x1F512;</span>
         <strong>Why can't I edit the intercept?</strong>{' '}
         {family === 'cumulative'
           ? 'Ordinal models use threshold (cut-point) intercepts between adjacent categories. '
@@ -1141,6 +1158,13 @@ function PriorDisplay({
       ` \u2192 values: ${fmt(Math.exp(lo))} to ${fmt(Math.exp(hi))}`;
   }
 
+  // Small scale badge so users can see at a glance which scale the prior lives on.
+  const scaleBadge =
+    link === 'logit' ? 'logit scale'
+    : link === 'log' ? 'log scale'
+    : isSlope && scale === 'standardized' ? 'SD units'
+    : 'natural units';
+
   return (
     <div style={{ marginBottom: 16 }}>
       {/* Parameter name + prior */}
@@ -1150,16 +1174,34 @@ function PriorDisplay({
           justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: 4,
+          gap: 8,
+          flexWrap: 'wrap',
         }}
       >
-        <span
-          style={{
-            fontFamily: 'var(--pw-font-math)',
-            fontSize: 14,
-            color: 'var(--pw-text)',
-          }}
-        >
-          {paramLabel}
+        <span style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+          <span
+            style={{
+              fontFamily: 'var(--pw-font-math)',
+              fontSize: 14,
+              color: 'var(--pw-text)',
+            }}
+          >
+            {paramLabel}
+          </span>
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 600,
+              letterSpacing: 0.3,
+              textTransform: 'uppercase',
+              color: 'var(--pw-text-muted)',
+              background: 'var(--pw-surface-raised)',
+              padding: '2px 6px',
+              borderRadius: 4,
+            }}
+          >
+            {scaleBadge}
+          </span>
         </span>
         <span
           style={{
@@ -1173,10 +1215,26 @@ function PriorDisplay({
       </div>
 
       {/* Curve */}
-      {sd > 0 && <DistCurve type="normal" mean={mean} param={sd} width={360} height={100} />}
+      {sd > 0 && (
+        <DistCurve
+          type="normal"
+          mean={mean}
+          param={sd}
+          width={360}
+          xAxisLabel={
+            link === 'logit'
+              ? 'log-odds (logit scale)'
+              : link === 'log'
+                ? 'log of outcome (log scale)'
+                : isSlope && scale === 'standardized'
+                  ? 'SD units'
+                  : 'outcome units'
+          }
+        />
+      )}
       {(link === 'logit' || link === 'log') && (
         <div style={{ fontSize: 10, color: 'var(--pw-text-dim)', textAlign: 'center', marginTop: -4, marginBottom: 4 }}>
-          x-axis: {link} scale {link === 'logit' ? '(this IS a Normal distribution — on the logit scale)' : '(this IS a Normal distribution — on the log scale)'}
+          Still a Normal distribution &mdash; just on the {link} scale.
         </div>
       )}
 

@@ -4,10 +4,10 @@
   --estiplan-node-bg: #ffffff;
   --estiplan-node-border: #333333;
   --estiplan-node-text: #1a1a1a;
-  --estiplan-node-subtext: #666666;
+  --estiplan-node-subtext: #555555;
   --estiplan-edge-color: #555555;
   --estiplan-edge-highlight: #e63946;
-  --estiplan-edge-dim: #cccccc;
+  --estiplan-edge-dim: #a8a8a8;
   --estiplan-card-bg: #f0f0f0;
   --estiplan-card-border: #bbbbbb;
   --estiplan-card-text: #1a1a1a;
@@ -27,5 +27,5 @@
   --estiplan-handle-color: #555555;
   --estiplan-type-badge-bg: #eaeaea;
   --estiplan-type-badge-text: #555555;
-  --estiplan-code-bg: rgba(0, 0, 0, 0.06);
+  --estiplan-code-bg: rgba(0, 0, 0, 0.09);
 }

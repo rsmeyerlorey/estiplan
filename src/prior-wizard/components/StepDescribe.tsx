@@ -171,10 +171,18 @@ export function StepDescribe({
   const outValid = isThresholdModel
     ? outcome.name.trim() !== ''
     : outcome.name.trim() !== '' && outcome.plausibleMax > outcome.plausibleMin
-      // For logit families, mean must be a valid probability (not 0 or 1)
-      && (link !== 'logit' || (outcome.mean > 0 && outcome.mean < 1))
+      // For logit families, all values must be strictly between 0 and 1
+      && (link !== 'logit' || (
+        outcome.mean > 0 && outcome.mean < 1 &&
+        outcome.plausibleMin > 0 && outcome.plausibleMin < 1 &&
+        outcome.plausibleMax > 0 && outcome.plausibleMax < 1
+      ))
       // For log families, all values must be positive
-      && (link !== 'log' || (outcome.mean > 0 && outcome.plausibleMin > 0));
+      && (link !== 'log' || (
+        outcome.mean > 0 &&
+        outcome.plausibleMin > 0 &&
+        outcome.plausibleMax > 0
+      ));
   const txValid =
     treatment.name.trim() !== '' &&
     treatment.plausibleMax > treatment.plausibleMin;
@@ -242,6 +250,12 @@ export function StepDescribe({
           {link === 'logit' && outcome.mean >= 1 && (
             <ValidationHint message="Baseline probability must be less than 1." />
           )}
+          {link === 'logit' && outcome.plausibleMin <= 0 && outcome.plausibleMax > 0 && (
+            <ValidationHint message="Lowest plausible proportion must be greater than 0." />
+          )}
+          {link === 'logit' && outcome.plausibleMax >= 1 && (
+            <ValidationHint message="Highest plausible proportion must be less than 1." />
+          )}
           {link === 'log' && outcome.mean !== undefined && outcome.mean <= 0 && (
             <ValidationHint message="Typical value must be greater than 0." />
           )}
@@ -258,7 +272,7 @@ export function StepDescribe({
       {/* Treatment variable — always the same */}
       <VariableForm
         label="Treatment variable"
-        sublabel="The cause you're investigating (continuous)"
+        sublabel="The cause or predictor you're investigating"
         desc={treatment}
         onChange={onTreatmentChange}
         namePlaceholder="e.g., annual rainfall"
@@ -271,7 +285,7 @@ export function StepDescribe({
         guidance={
           'An approximate mean is fine. For min and max, think: "I would be ' +
           'shocked to see this value, but it is within the range of physical ' +
-          'possibility." Note: this wizard currently assumes a continuous predictor.'
+          'possibility." For binary or categorical predictors, enter the two groups\' means as min/max.'
         }
       />
 
@@ -589,9 +603,10 @@ function VariableForm({
   /** Enforce positive values (for log-link families) */
   positiveOnly?: boolean;
 }) {
-  // Clamp to 0-1 for proportion/logit inputs, or enforce positive for log-link
+  // Clamp to (0, 1) exclusive for proportion/logit inputs (0 and 1 are invalid
+  // on the logit scale), or enforce positive for log-link.
   const clamp = (v: number) => {
-    if (step === '0.01') return Math.max(0, Math.min(1, v));
+    if (step === '0.01') return Math.max(0.001, Math.min(0.999, v));
     if (positiveOnly) return Math.max(0.01, v);
     return v;
   };
