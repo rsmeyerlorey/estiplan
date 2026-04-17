@@ -1,4 +1,4 @@
-import { memo, useState, useCallback, useMemo, useRef } from 'react';
+import { memo, useState, useCallback, useMemo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { Estimand } from '../../types/dag';
 import { useEstiplanStore } from '../../store/useEstiplanStore';

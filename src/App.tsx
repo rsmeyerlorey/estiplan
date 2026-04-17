@@ -235,7 +235,7 @@ function App() {
           {panelMode !== 'closed' && (
             <div className={appStyles.sidePanel} style={{ width: panelWidth }}>
               {panelMode === 'menu' && (
-                <MenuContent onOpenWizard={handleOpenWizard} onClose={handleClosePanel} />
+                <MenuContent onOpenWizard={handleOpenWizard} />
               )}
               {panelMode === 'wizard' && (
                 <PriorWizardPanel
@@ -264,7 +264,7 @@ function App() {
 }
 
 /** Side menu: about blurb + wizard launcher */
-function MenuContent({ onOpenWizard, onClose }: { onOpenWizard: () => void; onClose: () => void }) {
+function MenuContent({ onOpenWizard }: { onOpenWizard: () => void }) {
   return (
     <div className={appStyles.menuContent}>
       <p className={appStyles.aboutBlurb}>

@@ -87,7 +87,6 @@ export function generateModel(
 ): GeneratedModel {
   const family = brmsFamily(outcome.variableType);
   const outcomeR = rName(outcome.name);
-  const treatmentR = rName(treatment.name);
 
   // Build predictor list
   const predictors = [treatment, ...conditionOn];
@@ -193,9 +192,9 @@ export function generateModel(
 
   const prepLines: string[] = [];
   if (continuousPreds.length > 0 && factorPreds.length > 0) {
-    prepLines.push('# Standardize numeric predictors before fitting; brms handles factor coding');
+    prepLines.push('# Standardize continuous predictors before fitting; brms handles factor coding');
   } else if (continuousPreds.length > 0) {
-    prepLines.push('# Standardize numeric predictors before fitting');
+    prepLines.push('# Standardize continuous predictors before fitting');
   } else if (factorPreds.length > 0) {
     prepLines.push('# brms handles dummy coding for factor variables');
   }
