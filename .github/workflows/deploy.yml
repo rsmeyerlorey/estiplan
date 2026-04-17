@@ -24,9 +24,8 @@ jobs:
       - run: npm run build
       - run: npm test
 
-      - uses: JamesIves/github-pages-deploy-action@v4
+      - uses: actions/upload-pages-artifact@v3
         with:
-          folder: dist
-          branch: gh-pages
-          clean: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+          path: dist
+
+      - uses: actions/deploy-pages@v4
