@@ -762,7 +762,7 @@ describe('11 — Predictor type handling in brms code', () => {
     const treatment = getVariable(dag, 'v_tx_cont');
     const model = generateModel(outcome, treatment, 'total', [], false);
 
-    expect(model.brmsCode).toContain('# Standardize numeric predictors before fitting');
+    expect(model.brmsCode).toContain('# Standardize continuous predictors before fitting');
   });
 
   it('includes factor coding comment for factor-only predictors', () => {
@@ -779,7 +779,7 @@ describe('11 — Predictor type handling in brms code', () => {
     const adjCat = getVariable(dag, 'v_adj_cat');
     const model = generateModel(outcome, treatment, 'total', [adjCat], false);
 
-    expect(model.brmsCode).toContain('# Standardize numeric predictors before fitting; brms handles factor coding');
+    expect(model.brmsCode).toContain('# Standardize continuous predictors before fitting; brms handles factor coding');
   });
 
   // ── Interaction with factor treatment ──
