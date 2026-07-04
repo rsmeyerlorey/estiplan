@@ -257,10 +257,9 @@ export function StepStandardPriors({
       >
         These priors are intentionally broad. They express the expectation
         that no single predictor should have an enormous effect, without
-        committing to a specific effect size. They are a solid starting point
-        for most analyses &mdash; the next steps show what they mean in your
-        variables&rsquo; units, so you can tighten them where you genuinely
-        know more.
+        committing to a specific effect size. They are a good starting point
+        for many analyses. The next steps show what they mean in your
+        variables&rsquo; units, so you can adjust them if necessary.
       </div>
 
       {/* Continue button */}
