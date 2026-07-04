@@ -124,8 +124,10 @@ npm run dev        # dev server on localhost:5173
 npx vite build     # production build
 ```
 
-## Git
-- Repo: GitHub (private)
+## Git & Deployment
+- Repo: GitHub (public): https://github.com/rsmeyerlorey/estiplan
+- Live site: https://rsmeyerlorey.github.io/estiplan/
+- GitHub Actions deploys on every push to main (`.github/workflows/deploy.yml`: install → build → test → Pages deploy)
 
 ## Development Workflow
 Lecture-driven development: follow along with McElreath's Statistical Rethinking 2026 lectures, adding features as new concepts are introduced. Each lecture is a natural test case.
@@ -156,32 +158,22 @@ Lecture-driven development: follow along with McElreath's Statistical Rethinking
 23. ✅ Default prior specification with educational tooltips (editable per parameter)
 24. ✅ Automated test suite (10 reference DAGs, d-separation + prior generation tests)
 25. ✅ Minimal adjustment set algorithm + non-standard path handling
-26. ✅ About panel on title click (estimand etymology + course link)
+26. ✅ About panel (estimand etymology + course link) — lives in the ☰ side panel
+27. ✅ Prior Wizard integrated as resizable side panel (☰ menu + model card entry points, estimand pre-fill, scale-aware prior propagation)
+28. ✅ GitHub Pages deployment via GitHub Actions (build + test + deploy on push to main)
 
-## Prior Wizard (standalone, pending integration)
-A separate app in `../prior-wizard/` that walks users through setting Bayesian priors step by step. Currently standalone; integration plan is documented in ROADMAP.md §2.1. Key design decisions:
-- ☰ hamburger menu next to title opens a left side panel (pushes canvas, doesn't overlay)
-- Model card priors section gets "click to edit directly, or use the Prior Wizard"
-- Wizard pre-fills from estimand context (variable names, types, family)
-- Wizard component accepts props and returns priors via callback
+## Prior Wizard (integrated)
+The Prior Wizard walks users through setting Bayesian priors step by step. Integrated into Estiplan April 2026; lives in `src/prior-wizard/` — see its README.md for full architecture. The original standalone app also remains at `../prior-wizard/` (local git only, no GitHub remote).
 
-### Prior Wizard current status
-- Supports all 7 outcome families (Gaussian, Log-Normal, Beta, Bernoulli, Poisson, Ordinal, Categorical)
-- Three prior views: natural, centered, standardized (with interactive slope editors + confidence bounds)
-- localStorage persistence with auto-save
-- Gaussian/identity link is fully polished; logit/log links functional but need UX work
-- Gaussian vs Log-Normal framed as additive vs multiplicative effects
-- Log-normal effects shown as percentage change
-- Currently assumes continuous predictor (categorical treatment support is a Tier 3 goal)
-
-### Prior Wizard remaining TODOs
-- Intercept (α) editors for logit/log links (only identity link has one currently)
-- Standardized card clarity for logit/log (show treatment in SD units)
-- Distribution plot axis labels (log/logit) + optional natural-scale view
-- Input validation for bounded families (proportions 0–1)
-- Explanation for non-editable ordinal/categorical intercepts
-- Test suite for `computeScaledPriors` (7 families × 3 scales)
-- Replace boilerplate README
+- Two entry points: ☰ hamburger menu (left side panel with about blurb + wizard launcher) and "Open Prior Wizard" button in the model card priors section
+- Side panel pushes the canvas (doesn't overlay) and is resizable by dragging its edge; panel state in App.tsx (closed / menu / wizard)
+- ModelCard requests the wizard via a custom-event bridge (`wizardEvents.ts`), pre-filled from the estimand (variable names + family via `familyMap.ts`)
+- `onPriorsReady` returns a PriorResult; App.tsx applies it via `updateModelPrior` — scale-aware: standardized applies to all slopes (class `b`), natural/centered only to the treatment slope
+- Theming via `theme-bridge.css` (`--pw-*` vars read from `--estiplan-*`)
+- Supports all 7 outcome families (Gaussian, Log-Normal, Beta, Bernoulli, Poisson, Ordinal, Categorical); three prior scales (natural / centered / standardized) with interactive editors + confidence bounds; distribution plots with axis labels
+- localStorage persistence in standalone mode only (embedded mode starts fresh from the estimand)
+- Tests: `src/prior-wizard/lib/__tests__/computeScaledPriors.test.ts` (7 families × 3 scales)
+- Known gap: elicitation wording assumes a continuous predictor (categorical/binary treatment support is ROADMAP Tier 3.4)
 
 ## Architecture Notes
 - `history.ts` — HistoryManager class with pause/resume to prevent recursive snapshots during undo/redo apply
@@ -197,6 +189,8 @@ A separate app in `../prior-wizard/` that walks users through setting Bayesian p
 - ✅ A06: Fork confound detection + conditioning set suggestions
 - ✅ A07: Complete d-separation (pipe, collider, descendant) + backdoor criterion + split cards + Table Two Fallacy
 - ✅ Prior specification UI (default priors with educational tooltips, editable)
+- ✅ Prior Wizard integration (side panel, estimand pre-fill, scale-aware prior propagation)
+- ✅ GitHub Pages deployment (Actions: build + test + deploy)
 - ⬜ A08+: Continue with lectures (sensitivity analysis, measurement error, missing data, etc.)
 - ⬜ Full R script export
 - ⬜ Synthetic data simulation & testing loop

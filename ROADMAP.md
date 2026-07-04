@@ -31,8 +31,8 @@ Completed. Before making the repo public or sharing broadly.
 
 Core features that complete the DAG-to-inference pipeline McElreath teaches.
 
-### 2.1 Prior Wizard integration
-The Prior Wizard is a standalone app (`../prior-wizard/`) that walks users through setting Bayesian priors step by step. Once complete, it integrates into Estiplan as follows:
+### 2.1 Prior Wizard integration ✅
+Completed April 2026 — the wizard is embedded in `src/prior-wizard/` (see its README for architecture); the standalone app remains at `../prior-wizard/`. Built as designed:
 
 **UI design:**
 - **Hamburger menu (☰) next to "Estiplan" title** in the toolbar replaces the current title-click about panel
@@ -55,14 +55,9 @@ The Prior Wizard is a standalone app (`../prior-wizard/`) that walks users throu
 - Which variable is treatment vs outcome (from estimand)
 - The DAG stays visible while setting priors
 
-**Prior Wizard TODOs before integration:**
-- [ ] Add intercept (α) editors for logit/log link families (currently only Gaussian has one)
-- [ ] Clarify standardized cards for logit/log links (show treatment in SD units, explain what changes vs stays the same)
-- [ ] Add axis labels to distribution plots (log/logit scale) + optional "show on natural scale" view
-- [ ] Validate proportion inputs (clamp 0–1 for Beta/Bernoulli outcomes)
-- [ ] Explain why ordinal/categorical intercepts aren't user-editable (fixed priors with rationale)
-- [ ] Add test suite for `computeScaledPriors` (all 7 families × 3 scales, edge cases)
-- [ ] Replace boilerplate README with project-specific docs
+**Pre-integration TODOs — all shipped:** intercept editors for logit/log links, standardized cards with treatment in SD units, distribution plot axis labels, proportion input validation, ordinal/categorical intercept explanations, `computeScaledPriors` test suite (7 families × 3 scales), project-specific README.
+
+**Remaining gap → Tier 3.4:** elicitation wording assumes a continuous predictor (categorical/binary treatment support).
 
 **Why:** Statistical Rethinking is fundamentally Bayesian; priors are modeling decisions, not defaults to ignore
 
