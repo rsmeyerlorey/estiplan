@@ -285,7 +285,7 @@ export function StepDescribe({
         guidance={
           'An approximate mean is fine. For min and max, think: "I would be ' +
           'shocked to see this value, but it is within the range of physical ' +
-          'possibility." For binary or categorical predictors, enter the two groups\' means as min/max.'
+          'possibility." For a binary (0/1) predictor, use min = 0 and max = 1.'
         }
       />
 
@@ -303,9 +303,10 @@ export function StepDescribe({
         <div className="form-guidance">
           Your rough belief about how the treatment affects the outcome.
           This can be very broad &mdash; you can just think about whether
-          you expect the effect to be positive or negative. Setting your
-          prior expectation to 0 effect is a widely accepted standard
-          approach that allows the model to learn entirely from your data.
+          you expect the effect to be positive or negative. Centering your
+          expectation on 0 effect is the standard skeptical default: it
+          commits to no direction, and gently shrinks the estimate toward
+          zero unless your data provide evidence of an effect.
         </div>
 
         {link === 'identity' ? (
@@ -561,10 +562,10 @@ function EffectLog({
         </span>
       )}
       <div className="form-guidance" style={{ width: '100%', marginTop: 4 }}>
-        Because this is a log-normal outcome, effects are multiplicative.
+        Because this model uses a log link, effects are multiplicative.
         A positive percentage means {outName || 'outcome'} increases;
         a negative percentage means it decreases.
-        Values must be positive (percentage cannot go below &minus;100%).
+        The outcome must stay positive, so the change cannot go below &minus;100%.
       </div>
     </div>
   );

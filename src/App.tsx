@@ -268,7 +268,8 @@ function MenuContent({ onOpenWizard }: { onOpenWizard: () => void }) {
   return (
     <div className={appStyles.menuContent}>
       <p className={appStyles.aboutBlurb}>
-        <em>Estimand</em> comes from Latin — you can think of it as the{' '}
+        <em>Estimand</em> comes from the Latin for “the thing to be
+        estimated” — or, as a mnemonic, the{' '}
         <strong>esti</strong>mate you de<strong>mand</strong> from your data.
       </p>
       <p className={appStyles.aboutBlurb}>

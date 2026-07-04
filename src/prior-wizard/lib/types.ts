@@ -54,7 +54,7 @@ export const FAMILIES: Record<OutcomeFamily, FamilyInfo> = {
     description: 'Changes by percentage/ratio. Effects are multiplicative: "+20%." Income, area, distance, duration, body mass.',
     link: 'log',
     brmsFamily: 'lognormal()',
-    interceptMeaning: 'The log of the expected value when all predictors are at their reference/mean.',
+    interceptMeaning: 'The log of the median (typical) value when all predictors are at their reference/mean. exp(μ) gives the median, not the mean — for right-skewed data the mean sits higher.',
     slopeMeaning: 'A one-unit increase in the predictor changes the log-value by this much. A log-change of 1 means multiplying by e \u2248 2.72.',
     hasDispersion: true,
     dispersionParam: 'sigma',
@@ -133,7 +133,7 @@ export const FAMILY_GROUPS: FamilyGroup[] = [
       {
         family: 'gaussian',
         label: 'Gaussian (additive effects)',
-        description: 'Effects are absolute amounts: "adding 100mm of rain adds 1.5m to elevation." The same change means the same thing regardless of starting point. Temperature, elevation, profit/loss, test scores.',
+        description: 'Effects are absolute amounts: "100mm more rain raises the lake level by 1.5m." The same change means the same thing regardless of starting point. Temperature, elevation, profit/loss, test scores.',
       },
       {
         family: 'lognormal',

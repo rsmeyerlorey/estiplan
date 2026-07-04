@@ -23,7 +23,7 @@ export const REASON_TOOLTIPS: Record<string, string> = {
 
 export const BAD_CONTROL_TOOLTIPS: Record<string, string> = {
   collider:
-    'Collider (bad control): This variable is caused by two or more other variables. Conditioning on it creates a spurious association between its causes — like learning someone is in the NBA tells you tall people are less likely to be highly skilled, even though height and skill are independent in the population.',
+    'Collider (bad control): This variable is caused by two or more other variables. Conditioning on it creates a spurious association between its causes — among NBA players (conditioning on making the NBA), shorter players tend to be more skilled, because they had to be to make it. Height and skill look negatively related even though they\'re unrelated in the general population.',
 
   'mediator-total':
     'Mediator (bad control for total effect): This variable is on the causal path from treatment to outcome. Conditioning on it would block part of the effect you\'re trying to measure. Only condition on mediators when estimating a direct effect.',

@@ -49,10 +49,10 @@ function getStandardPriors(
       label: 'Intercept (log scale)',
       prior: 'Normal(0, 1)',
       explanation:
-        `When all predictors are at their mean values, the baseline ${out} ` +
-        `could range from about 0.14\u00d7 to 7.4\u00d7 the average \u2014 for example, ` +
-        `if the typical value is 10, the baseline could fall between about 1 and 74. ` +
-        `The model will learn the actual baseline from the data.`,
+        `Normal(0, 1) is centered at log(1) = 0, so as written it says the baseline ${out} ` +
+        `is near 1, ranging from about 0.14 to 7.4. In practice you center this prior at the ` +
+        `log of your typical value \u2014 the wizard does that once you describe your variables \u2014 ` +
+        `which keeps the same spread: about 0.14\u00d7 to 7.4\u00d7 your typical value.`,
       curveType: 'normal',
       curveParams: [0, 1],
     });
@@ -126,8 +126,9 @@ function getStandardPriors(
         label: info.dispersionLabel || '\u03c3',
         prior: 'Exponential(1)',
         explanation:
-          `Variation not explained by the predictors is expected to fall ` +
-          `within 1 SD; the model will refine this estimate from the data.`,
+          `How far observations scatter around the model's prediction — ` +
+          `expected to be around 1 on this parameter's scale, with 95% of ` +
+          `prior mass below 3. The model will refine this estimate from the data.`,
         curveType: 'exponential',
         curveParams: [1],
       });
@@ -256,9 +257,10 @@ export function StepStandardPriors({
       >
         These priors are intentionally broad. They express the expectation
         that no single predictor should have an enormous effect, without
-        committing to a specific effect size. They are set with the knowledge
-        that the model will refine them using your data. For most analyses,
-        these defaults are preferable to hand-tuned priors.
+        committing to a specific effect size. They are a solid starting point
+        for most analyses &mdash; the next steps show what they mean in your
+        variables&rsquo; units, so you can tighten them where you genuinely
+        know more.
       </div>
 
       {/* Continue button */}

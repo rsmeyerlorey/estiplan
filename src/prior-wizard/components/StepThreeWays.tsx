@@ -173,9 +173,10 @@ export function StepThreeWays({ state, onChooseScale, onEffectTxChange, onEffect
         within &plusmn;2 &times; SD (Standard Deviation).&rdquo; So Normal(0, 5) says
         the value is most likely near 0, but could plausibly be anywhere from
         &minus;10 to +10. The SD controls how confident you are &mdash; smaller
-        SD = tighter belief. In Bayesian modeling, it is generally good to set
-        wider SDs &mdash; this lets your real data tighten the estimates as it
-        informs the model.
+        SD = tighter belief. A good habit is to set the SD slightly wider than
+        your honest belief &mdash; wide enough that the data can pull the
+        estimate where it needs to go, but not so wide that absurd values get
+        real prior weight.
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -401,7 +402,8 @@ export function StepThreeWays({ state, onChooseScale, onEffectTxChange, onEffect
                   padding: '6px 10px', background: 'var(--pw-surface-raised)', borderRadius: 4 }}>
                   <strong style={{ color }}>Common defaults:</strong>{' '}
                   α ~ Normal(0, 1.5) assigns roughly equal probability across outcomes.{' '}
-                  β ~ Normal(0, 0.5) assumes small effects on the log-odds scale.
+                  β ~ Normal(0, 1) allows substantial effects on the log-odds scale
+                  while ruling out extreme ones.
                   These are widely used starting points when you have little prior knowledge.
                 </div>
               )}
@@ -1149,13 +1151,21 @@ function PriorDisplay({
       interpretation = `95% prior interval: ${fmt(lo)} to ${fmt(hi)} ${sdNote}`;
     }
   } else if (link === 'logit') {
-    interpretation =
-      `95% on logit scale: ${fmt(lo)} to ${fmt(hi)} ${sdNote}` +
-      ` \u2192 probabilities: ${fmt(logistic(lo) * 100, 1)}% to ${fmt(logistic(hi) * 100, 1)}%`;
+    // Intercepts are log-odds (translate to probabilities); slopes are
+    // *changes* in log-odds (translate to odds ratios, not probabilities)
+    const perChange = scale === 'standardized' ? 'per 1-SD change' : 'per unit';
+    interpretation = isSlope
+      ? `95% on logit scale: ${fmt(lo)} to ${fmt(hi)} ${sdNote}` +
+        ` \u2192 multiplies the odds by ${fmt(Math.exp(lo))}\u00d7 to ${fmt(Math.exp(hi))}\u00d7 ${perChange}`
+      : `95% on logit scale: ${fmt(lo)} to ${fmt(hi)} ${sdNote}` +
+        ` \u2192 probabilities: ${fmt(logistic(lo) * 100, 1)}% to ${fmt(logistic(hi) * 100, 1)}%`;
   } else if (link === 'log') {
-    interpretation =
-      `95% on log scale: ${fmt(lo)} to ${fmt(hi)} ${sdNote}` +
-      ` \u2192 values: ${fmt(Math.exp(lo))} to ${fmt(Math.exp(hi))}`;
+    const perChange = scale === 'standardized' ? 'per 1-SD change' : 'per unit';
+    interpretation = isSlope
+      ? `95% on log scale: ${fmt(lo)} to ${fmt(hi)} ${sdNote}` +
+        ` \u2192 multiplies the outcome by ${fmt(Math.exp(lo))}\u00d7 to ${fmt(Math.exp(hi))}\u00d7 ${perChange}`
+      : `95% on log scale: ${fmt(lo)} to ${fmt(hi)} ${sdNote}` +
+        ` \u2192 values: ${fmt(Math.exp(lo))} to ${fmt(Math.exp(hi))}`;
   }
 
   // Small scale badge so users can see at a glance which scale the prior lives on.

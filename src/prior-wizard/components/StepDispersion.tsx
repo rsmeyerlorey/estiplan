@@ -31,8 +31,10 @@ export function StepDispersion({ family, rate, onRateChange }: Props) {
             the variation in the outcome. <strong>&sigma;</strong> (sigma)
             captures how much noise is left over, or how far individual
             observations scatter around the model&rsquo;s prediction.
-            Can usually be left at 1, unless you expect very little or very
-            much noise.
+            Rate = 1 works well when the outcome is standardized or modeled
+            on the log scale. If your outcome is in natural units, match the
+            scale: the prior&rsquo;s mean is 1/rate, so pick rate &asymp; 1
+            divided by a typical residual spread in those units.
           </>
         ) : (
           <>
@@ -112,11 +114,13 @@ export function StepDispersion({ family, rate, onRateChange }: Props) {
           The rate parameter controls the center and spread in one number.
         </p>
         <p style={{ marginTop: 8 }}>
-          You can almost always leave this at rate = 1. The model will figure
+          Rate = 1 is usually fine{info.dispersionParam === 'sigma'
+            ? ' \u2014 provided your outcome is standardized or on the log scale (see above)'
+            : ''}. The model will figure
           out the actual {info.dispersionParam === 'sigma' ? '\u03c3' : '\u03c6'}{' '}
           from your data &mdash; the prior just keeps it in a reasonable range.
-          Only change it if you have strong reason to expect very little or very
-          much unexplained variation.
+          Beyond that, only change it if you have strong reason to expect very
+          little or very much unexplained variation.
         </p>
       </WhyBox>
     </div>
