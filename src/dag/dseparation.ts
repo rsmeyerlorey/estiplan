@@ -41,6 +41,19 @@ export interface BadControlWarning {
   explanation: string;
 }
 
+/** Variable worth conditioning on for precision, not identification */
+export interface PrecisionCovariate {
+  variableId: string;
+  explanation: string;
+}
+
+/** Warning about a sample-selection variable (conditioned on by design) */
+export interface SelectionWarning {
+  variableId: string;
+  type: 'selection-collider' | 'selection-mediator';
+  explanation: string;
+}
+
 export interface BackdoorResult {
   /** Variables to condition on (good controls) */
   adjustmentSet: AdjustmentReason[];
@@ -54,6 +67,10 @@ export interface BackdoorResult {
   backdoorPaths: UndirectedPath[];
   /** Whether a valid adjustment set was found */
   identifiable: boolean;
+  /** Parents of the outcome unrelated to treatment — optional precision covariates */
+  precisionCandidates: PrecisionCovariate[];
+  /** Warnings about sample-selection variables */
+  selectionWarnings: SelectionWarning[];
 }
 
 // ── Helpers ──
@@ -301,17 +318,23 @@ function* combinations<T>(arr: T[], size: number): Generator<T[]> {
 /**
  * Find the smallest subset of candidates that blocks all backdoor paths.
  * Enumerates subsets by increasing size (0, 1, 2, ...).
+ *
+ * `baseConditioned` holds variables conditioned on regardless of the
+ * adjustment set (excluded mediators for direct effects, selection
+ * variables) — every subset is evaluated together with them, so blocking
+ * accounts for paths they close AND colliders they open.
  */
 function findMinimalBlockingSet(
   candidates: string[],
   backdoorPaths: UndirectedPath[],
   forwardAdj: Map<string, Set<string>>,
+  baseConditioned: Set<string> = new Set(),
 ): Set<string> {
   for (let size = 0; size <= candidates.length; size++) {
     for (const subset of combinations(candidates, size)) {
-      const condSet = new Set(subset);
+      const condSet = new Set([...subset, ...baseConditioned]);
       if (backdoorPaths.every((p) => isPathBlocked(p, condSet, forwardAdj))) {
-        return condSet;
+        return new Set(subset);
       }
     }
   }
@@ -337,6 +360,7 @@ export function findBackdoorAdjustmentSet(
   outcomeId: string,
   mediatorIdsForDirect: string[] = [],
   unobservedIds: Set<string> = new Set(),
+  selectionIds: Set<string> = new Set(),
 ): BackdoorResult {
   const forwardAdj = buildForwardAdj(edges);
   const allPaths = findAllUndirectedPaths(edges, treatmentId, outcomeId);
@@ -352,12 +376,24 @@ export function findBackdoorAdjustmentSet(
   // All non-causal paths that must be blocked (backdoor + non-standard)
   const pathsToBlock = [...backdoorPaths, ...nonStandardPaths];
 
+  // Conditioned on by design, independent of the adjustment set:
+  // excluded mediators (direct effects) and selection variables (the sample
+  // itself is stratified on them — selection acts exactly like conditioning).
+  const baseConditioned = new Set<string>();
+  for (const m of mediatorIdsForDirect) baseConditioned.add(m);
+  for (const s of selectionIds) {
+    if (s !== treatmentId && s !== outcomeId) baseConditioned.add(s);
+  }
+
   // Descendants of treatment — cannot be in adjustment set
   const treatmentDescendants = findDescendants(treatmentId, forwardAdj);
 
-  // Collect all nodes on backdoor paths (excluding treatment and outcome)
+  // Collect all nodes on paths that need blocking (excluding endpoints).
+  // Backdoor-path nodes block classic confounding; non-standard-path nodes
+  // only matter when base conditioning (mediator/selection) opens a collider
+  // on such a path and an observed fork/pipe on it can re-block it.
   const backdoorNodes = new Set<string>();
-  for (const path of backdoorPaths) {
+  for (const path of pathsToBlock) {
     for (let i = 1; i < path.nodes.length - 1; i++) {
       backdoorNodes.add(path.nodes[i]);
     }
@@ -388,7 +424,8 @@ export function findBackdoorAdjustmentSet(
     if (
       !treatmentDescendants.has(nodeId) &&
       !colliderNodes.has(nodeId) &&
-      !unobservedIds.has(nodeId)
+      !unobservedIds.has(nodeId) &&
+      !baseConditioned.has(nodeId)
     ) {
       candidates.add(nodeId);
     }
@@ -397,23 +434,33 @@ export function findBackdoorAdjustmentSet(
   const candidateArr = [...candidates];
 
   // Find the smallest subset of candidates that blocks all non-causal paths
-  // (both backdoor and non-standard). isPathBlocked handles collider-opening
-  // correctly: if conditioning opens a collider, the path is reported as
-  // unblocked, so the subset is rejected.
+  // (both backdoor and non-standard), given the base-conditioned variables.
+  // isPathBlocked handles collider-opening correctly: if conditioning opens
+  // a collider, the path is reported as unblocked, so the subset is rejected.
   // Cap at 15 candidates to avoid combinatorial explosion; fall back to full set.
   let adjustmentSet: Set<string>;
   if (candidateArr.length <= 15 && pathsToBlock.length > 0) {
-    adjustmentSet = findMinimalBlockingSet(candidateArr, pathsToBlock, forwardAdj);
+    adjustmentSet = findMinimalBlockingSet(
+      candidateArr,
+      pathsToBlock,
+      forwardAdj,
+      baseConditioned,
+    );
   } else if (pathsToBlock.length === 0) {
     adjustmentSet = new Set();
   } else {
     adjustmentSet = candidates; // fallback for very large DAGs
   }
 
-  // Assign reasons: check each variable's role on backdoor paths
+  // Everything actually conditioned on in the model
+  const fullConditioned = new Set([...adjustmentSet, ...baseConditioned]);
+
+  // Assign reasons: check each variable's role on backdoor paths.
+  // Variables that sit on no backdoor path are there to re-block a path
+  // opened by conditioning on a mediator or selection variable.
   const reasons: AdjustmentReason[] = [];
   for (const nodeId of adjustmentSet) {
-    let reasonType: AdjustmentReason['reason'] = 'pipe-backdoor';
+    let reasonType: AdjustmentReason['reason'] | null = null;
     for (const path of backdoorPaths) {
       const idx = path.nodes.indexOf(nodeId);
       if (idx <= 0 || idx >= path.nodes.length - 1) continue;
@@ -423,21 +470,115 @@ export function findBackdoorAdjustmentSet(
         reasonType = 'fork';
         break;
       }
+      reasonType = 'pipe-backdoor';
     }
+    if (reasonType === null) reasonType = 'opened-collider';
     reasons.push({
       variableId: nodeId,
       reason: reasonType,
       explanation:
         reasonType === 'fork'
           ? 'Common cause — blocks fork confound on backdoor path'
-          : 'Blocks non-causal association on backdoor path',
+          : reasonType === 'opened-collider'
+            ? 'Blocks a non-causal path opened by conditioning on a mediator or selection variable'
+            : 'Blocks non-causal association on backdoor path',
     });
   }
 
-  // Verify: are all non-causal paths blocked (backdoor + non-standard)?
-  const identifiable = pathsToBlock.every((p) =>
-    isPathBlocked(p, adjustmentSet, forwardAdj),
+  // Verify: are all non-causal paths blocked (backdoor + non-standard),
+  // given everything conditioned on (adjustment set + mediators + selection)?
+  let identifiable = pathsToBlock.every((p) =>
+    isPathBlocked(p, fullConditioned, forwardAdj),
   );
+
+  // ── Sample-selection warnings ──
+  // Selection acts like conditioning that cannot be undone. Two failure modes:
+  // 1. Selection on a mediator blocks part of the causal effect (survivorship).
+  // 2. Selection on a collider opens a non-causal path; if no observed
+  //    variable re-blocks it, the effect is not identifiable from this sample.
+  const selectionWarnings: SelectionWarning[] = [];
+  for (const s of selectionIds) {
+    if (s === treatmentId || s === outcomeId) continue;
+
+    const onCausalPath = causalPaths.some((p) => {
+      const idx = p.nodes.indexOf(s);
+      return idx > 0 && idx < p.nodes.length - 1;
+    });
+    if (onCausalPath && !mediatorIdsForDirect.includes(s)) {
+      selectionWarnings.push({
+        variableId: s,
+        type: 'selection-mediator',
+        explanation:
+          'The sample is selected on this variable, which lies on a causal path — selection blocks part of the effect being estimated (survivorship bias)',
+      });
+      identifiable = false;
+      continue;
+    }
+
+    const opensUnblockedPath = pathsToBlock.some((p) => {
+      if (isPathBlocked(p, fullConditioned, forwardAdj)) return false;
+      // Path is open — is this selection variable a collider-opener on it?
+      for (let i = 1; i < p.nodes.length - 1; i++) {
+        const b = p.nodes[i];
+        const triple = classifyTriple(
+          forwardAdj,
+          p.nodes[i - 1],
+          b,
+          p.nodes[i + 1],
+        );
+        if (triple === 'collider') {
+          if (b === s || findDescendants(b, forwardAdj).has(s)) return true;
+        }
+      }
+      return false;
+    });
+    if (opensUnblockedPath) {
+      selectionWarnings.push({
+        variableId: s,
+        type: 'selection-collider',
+        explanation:
+          'The sample is selected on this variable, which is a collider — selection opens a non-causal path that no observed variable can block',
+      });
+    }
+  }
+
+  // ── Precision covariates ──
+  // Parents of the outcome with no causal connection to the treatment.
+  // Not needed for identification, but conditioning on them soaks up outcome
+  // variance and tightens the estimate (McElreath's wine judges, lecture A8).
+  const nodesOnAnyPath = new Set<string>();
+  for (const p of allPaths) for (const n of p.nodes) nodesOnAnyPath.add(n);
+
+  const outcomeParents = new Set<string>();
+  for (const e of edges) {
+    if (e.target === outcomeId) outcomeParents.add(e.source);
+  }
+
+  const precisionCandidates: PrecisionCovariate[] = [];
+  for (const parent of outcomeParents) {
+    if (parent === treatmentId) continue;
+    if (nodesOnAnyPath.has(parent)) continue; // has a causal role already
+    if (treatmentDescendants.has(parent)) continue; // post-treatment
+    if (unobservedIds.has(parent)) continue;
+    if (selectionIds.has(parent)) continue;
+    if (fullConditioned.has(parent)) continue;
+    // Safety: conditioning on it must not open any path we rely on being blocked
+    const safe = pathsToBlock.every((p) => {
+      if (!isPathBlocked(p, fullConditioned, forwardAdj)) return true; // already open
+      return isPathBlocked(
+        p,
+        new Set([...fullConditioned, parent]),
+        forwardAdj,
+      );
+    });
+    if (safe) {
+      precisionCandidates.push({
+        variableId: parent,
+        explanation:
+          'Direct cause of the outcome unrelated to the treatment — conditioning on it soaks up outcome variance and tightens the estimate. Optional: not needed for identification.',
+      });
+    }
+  }
 
   // Build bad control warnings
   const badControls: BadControlWarning[] = [];
@@ -451,6 +592,7 @@ export function findBackdoorAdjustmentSet(
   for (const desc of treatmentDescendants) {
     if (desc === outcomeId) continue;
     if (directExclusions.has(desc)) continue; // Wanted for direct effect
+    if (selectionIds.has(desc)) continue; // Conditioned by design — has its own warning
     if (badControlSeen.has(desc)) continue;
 
     const isMediator = causalPaths.some(
@@ -480,6 +622,7 @@ export function findBackdoorAdjustmentSet(
     if (collider === treatmentId || collider === outcomeId) continue;
     if (badControlSeen.has(collider)) continue;
     if (directExclusions.has(collider)) continue;
+    if (selectionIds.has(collider)) continue; // Conditioned by design — has its own warning
 
     badControls.push({
       variableId: collider,
@@ -497,6 +640,7 @@ export function findBackdoorAdjustmentSet(
       if (desc === treatmentId || desc === outcomeId) continue;
       if (badControlSeen.has(desc)) continue;
       if (directExclusions.has(desc)) continue;
+      if (selectionIds.has(desc)) continue; // Conditioned by design — has its own warning
       if (colliderNodes.has(desc)) continue; // Already handled as collider
 
       badControls.push({
@@ -516,5 +660,7 @@ export function findBackdoorAdjustmentSet(
     causalPaths,
     backdoorPaths,
     identifiable,
+    precisionCandidates,
+    selectionWarnings,
   };
 }

@@ -23,7 +23,8 @@ export function variableTypeToFamily(type: VariableType): OutcomeFamily | undefi
     case 'categorical':
       return 'categorical';
     case 'unobserved':
-      return undefined; // Can't set priors for unobserved
+    case 'selection':
+      return undefined; // Can't set priors for unobserved/selection nodes
     default:
       return 'gaussian';
   }

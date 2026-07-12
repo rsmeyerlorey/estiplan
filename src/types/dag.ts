@@ -7,6 +7,7 @@ export type VariableType =
   | 'proportion'
   | 'positive-continuous'
   | 'unobserved'
+  | 'selection'
   | 'time-series'
   | 'time-cycle';
 
@@ -19,6 +20,7 @@ export const VARIABLE_TYPE_LABELS: Record<VariableType, string> = {
   proportion: 'Proportion',
   'positive-continuous': 'Positive Continuous',
   unobserved: 'Unobserved / Latent',
+  selection: 'Selection (sampled on)',
   'time-series': 'Time (Series)',
   'time-cycle': 'Time (Cycle)',
 };
@@ -56,7 +58,10 @@ export const VARIABLE_TYPE_GROUPS: VariableTypeGroup[] = [
   },
   {
     label: 'Special',
-    types: [{ type: 'unobserved', label: 'Unobserved / Latent' }],
+    types: [
+      { type: 'unobserved', label: 'Unobserved / Latent' },
+      { type: 'selection', label: 'Selection (sampled on)' },
+    ],
   },
 ];
 
@@ -85,6 +90,19 @@ export interface AdjustmentEntry {
 export interface BadControlEntry {
   variableId: string;
   type: 'collider' | 'post-treatment' | 'mediator-total';
+  explanation: string;
+}
+
+/** Variable worth conditioning on for precision, not identification */
+export interface PrecisionEntry {
+  variableId: string;
+  explanation: string;
+}
+
+/** Warning about a sample-selection variable (conditioned on by design) */
+export interface SelectionWarningEntry {
+  variableId: string;
+  type: 'selection-collider' | 'selection-mediator';
   explanation: string;
 }
 
@@ -129,6 +147,12 @@ export interface StatisticalModel {
   conditionedOn: string[];
   /** Excluded mediator IDs (for direct effects) */
   excludedMediators: string[];
+  /** Detected precision covariates (parents of outcome unrelated to treatment) */
+  precisionCandidates?: PrecisionEntry[];
+  /** Precision covariates the user chose to include in the model */
+  precisionVars?: string[];
+  /** Warnings about sample-selection variables */
+  selectionWarnings?: SelectionWarningEntry[];
   /** Whether interaction terms are enabled */
   interaction: boolean;
   /** Generated math notation lines */

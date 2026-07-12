@@ -45,6 +45,26 @@ export const IDENTIFIABILITY_TOOLTIPS = {
     'Not identifiable means there is no set of observed variables you can condition on to isolate the causal effect. This usually happens because of an unobserved confound — a common cause of both treatment and outcome that you can\'t measure or adjust for.',
 };
 
+// ── Precision covariate tooltip ──
+
+export const PRECISION_TOOLTIP =
+  'Precision covariate: a direct cause of the outcome with no causal connection to the treatment. It is NOT needed to identify the causal effect (it sits on no backdoor path), but conditioning on it soaks up outcome variance, so the same data give a tighter estimate. McElreath\'s example: wine judges — judge preferences are not a confound of wine origin, but adjusting for them sharpens the estimate of wine quality.';
+
+// ── Direct-effect assumption tooltip ──
+
+export const DIRECT_EFFECT_TOOLTIP =
+  'Estimating a direct effect requires conditioning on the mediator — and that is only unbiased if the mediator and outcome share NO unmeasured common cause (ability, motivation, quality…). If one exists, the mediator is a collider on a hidden path: conditioning on it opens that path, which can mask a real direct effect or fabricate one. This assumption is about variables NOT drawn in your DAG, so it cannot be checked automatically — it has to be argued scientifically.';
+
+// ── Sample selection tooltips ──
+
+export const SELECTION_WARNING_TOOLTIPS: Record<string, string> = {
+  'selection-collider':
+    'Selection collider: the sample is conditioned on this variable by design, and it is a common effect of variables on a non-causal path. Selection opens that path — like studying only NBA players or only police stops. Because no observed variable blocks the opened path, the effect is not identifiable from this sample without stronger assumptions.',
+
+  'selection-mediator':
+    'Selection on a mediator: the sample is conditioned on a variable that transmits part of the causal effect. Selection blocks that part of the effect — survivorship bias. The total effect is not identifiable from this sample without stronger assumptions.',
+};
+
 // ── Table Two Fallacy tooltip ──
 
 export const TABLE_TWO_TOOLTIP =
@@ -61,6 +81,12 @@ export const SECTION_TOOLTIPS = {
 
   backdoorAnalysis:
     'Backdoor analysis checks whether you can identify the causal effect by finding variables to condition on. It looks at all paths between treatment and outcome, classifies each as causal or non-causal, and finds which variables block the non-causal ones.',
+
+  precision:
+    'Optional precision covariates — direct causes of the outcome unrelated to the treatment. Including them does not change identification, but it soaks up outcome variance and tightens the causal estimate from the same data.',
+
+  sampleSelection:
+    'The sample was selected on these variables — only units with certain values made it into the data. Selection acts exactly like conditioning: on a collider it opens a non-causal path, on a mediator it blocks part of the causal effect. You cannot undo it by changing the model; it is a property of how the data were collected.',
 };
 
 // ── Shared label helpers ──

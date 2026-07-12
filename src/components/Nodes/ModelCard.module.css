@@ -106,6 +106,30 @@
   color: #f55b5b;
 }
 
+.reasonTagPrecision {
+  composes: reasonTag;
+  background: rgba(76, 175, 80, 0.15);
+  color: #4caf50;
+}
+
+/* ── Precision covariate rows (checkbox + name + tag) ── */
+
+.precisionItem {
+  font-size: 10px;
+  color: var(--estiplan-card-text);
+  padding: 2px 0 2px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.precisionItem input[type='checkbox'] {
+  margin: 0;
+  cursor: pointer;
+}
+
 /* ── Bad controls / warnings ── */
 
 .warningSection {

@@ -8,6 +8,9 @@ import {
   IDENTIFIABILITY_TOOLTIPS,
   TABLE_TWO_TOOLTIP,
   SECTION_TOOLTIPS,
+  PRECISION_TOOLTIP,
+  DIRECT_EFFECT_TOOLTIP,
+  SELECTION_WARNING_TOOLTIPS,
   reasonLabel,
   badControlLabel,
 } from '../../dag/explanations';
@@ -35,6 +38,9 @@ function ModelCardComponent({ id, data }: NodeProps) {
 
   const toggleModelInteraction = useEstiplanStore(
     (s) => s.toggleModelInteraction,
+  );
+  const toggleModelPrecisionVar = useEstiplanStore(
+    (s) => s.toggleModelPrecisionVar,
   );
   const updateModelPrior = useEstiplanStore((s) => s.updateModelPrior);
   const removeModel = useEstiplanStore((s) => s.removeModel);
@@ -146,8 +152,14 @@ function ModelCardComponent({ id, data }: NodeProps) {
     [id, model.targetId, model.sourceId, variables],
   );
 
+  const precisionCandidates = model.precisionCandidates ?? [];
+  const precisionVars = model.precisionVars ?? [];
+  const selectionWarnings = model.selectionWarnings ?? [];
+
   const hasConditionedVars =
-    model.conditionedOn.length > 0 || model.excludedMediators.length > 0;
+    model.conditionedOn.length > 0 ||
+    model.excludedMediators.length > 0 ||
+    precisionVars.length > 0;
 
   const treatmentName =
     variables.get(model.sourceId)?.name || 'treatment';
@@ -222,6 +234,66 @@ function ModelCardComponent({ id, data }: NodeProps) {
                   </span>
                 </InfoTip>
               </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Sample selection warnings ── */}
+      {selectionWarnings.length > 0 && (
+        <div className={styles.warningSection}>
+          <InfoTip text={SECTION_TOOLTIPS.sampleSelection} align="left" tag="div">
+            <div className={styles.sectionLabel}>Sample selection</div>
+          </InfoTip>
+          {selectionWarnings.map((w) => {
+            const v = variables.get(w.variableId);
+            if (!v) return null;
+            return (
+              <div key={w.variableId} className={styles.warningItem}>
+                <InfoTip text={SELECTION_WARNING_TOOLTIPS[w.type] || w.explanation}>
+                  <span className={styles.warningBadge}>
+                    {w.type === 'selection-mediator' ? 'blocks effect' : 'opens path'}
+                  </span>
+                </InfoTip>
+                <span className={styles.warningText}>
+                  <strong>{v.name}</strong>
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── Precision covariates (optional) ── */}
+      {precisionCandidates.length > 0 && (
+        <div className={styles.adjustmentSection}>
+          <InfoTip text={SECTION_TOOLTIPS.precision} align="left" tag="div">
+            <div className={styles.sectionLabel}>Optional &mdash; precision</div>
+          </InfoTip>
+          {precisionCandidates.map((entry) => {
+            const v = variables.get(entry.variableId);
+            if (!v) return null;
+            const included = precisionVars.includes(entry.variableId);
+            return (
+              <label
+                key={entry.variableId}
+                className={`${styles.precisionItem} nodrag nopan`}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <input
+                  type="checkbox"
+                  checked={included}
+                  onChange={() =>
+                    toggleModelPrecisionVar(id, entry.variableId, variables)
+                  }
+                />
+                <span className={styles.adjustmentName}>
+                  {v.name} ({v.shorthand})
+                </span>
+                <InfoTip text={PRECISION_TOOLTIP}>
+                  <span className={styles.reasonTagPrecision}>precision</span>
+                </InfoTip>
+              </label>
             );
           })}
         </div>
@@ -362,6 +434,22 @@ function ModelCardComponent({ id, data }: NodeProps) {
             Allow slopes to vary by {treatmentName}
           </span>
         </label>
+      )}
+
+      {/* ── Direct-effect assumption note ── */}
+      {model.excludedMediators.length > 0 && (
+        <InfoTip text={DIRECT_EFFECT_TOOLTIP} align="left" tag="div">
+          <div className={styles.tableTwoNote}>
+            Assumes no unmeasured common cause of{' '}
+            {model.excludedMediators
+              .map((mid) => variables.get(mid)?.name)
+              .filter(Boolean)
+              .join(', ') || 'the mediator'}{' '}
+            and {variables.get(model.targetId)?.name || 'the outcome'}. If one
+            exists, conditioning on the mediator opens a hidden path and biases
+            this direct effect.
+          </div>
+        </InfoTip>
       )}
 
       {/* ── Table Two Fallacy note ── */}

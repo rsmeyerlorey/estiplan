@@ -77,6 +77,7 @@ export interface GeneratedModel {
  * @param kind - 'total' or 'direct'
  * @param conditionOn - Variables to condition on (mediators for direct effects)
  * @param interaction - Whether to allow slopes to vary by treatment
+ * @param priorsOverride - Use these priors (e.g. user-edited) instead of defaults
  */
 export function generateModel(
   outcome: Variable,
@@ -84,6 +85,7 @@ export function generateModel(
   _kind: EstimandKind,
   conditionOn: Variable[],
   interaction: boolean,
+  priorsOverride?: PriorSpec[],
 ): GeneratedModel {
   const family = brmsFamily(outcome.variableType);
   const outcomeR = rName(outcome.name);
@@ -179,7 +181,9 @@ export function generateModel(
 
   // ── Priors ──
 
-  const priors = generateDefaultPriors(outcome.variableType, treatment, conditionOn, interaction);
+  const priors =
+    priorsOverride ??
+    generateDefaultPriors(outcome.variableType, treatment, conditionOn, interaction);
 
   const priorLines = priors.map((p) => {
     const coefArg = p.coef ? `, coef = "${p.coef}"` : '';
@@ -202,7 +206,7 @@ export function generateModel(
 
   const brmsCodeLines = [
     ...prepLines,
-    `brm(${formula},`,
+    `fit <- brm(${formula},`,
     `    data = d,`,
     `    family = ${family},`,
   ];
@@ -211,11 +215,13 @@ export function generateModel(
     priorLines.forEach((line, i) => {
       brmsCodeLines.push(line + (i < priorLines.length - 1 ? ',' : ''));
     });
-    brmsCodeLines.push(`    ))`);  // aligned under prior = c(
-  } else {
-    // Replace trailing comma on family line
-    brmsCodeLines[brmsCodeLines.length - 1] = `    family = ${family})`;
+    brmsCodeLines.push(`    ),`);
   }
+  brmsCodeLines.push(`    chains = 4, cores = 4)`);
+  brmsCodeLines.push('');
+  brmsCodeLines.push('# Check MCMC diagnostics before trusting estimates:');
+  brmsCodeLines.push('# summary(fit)  # Rhat ~ 1.00; Bulk_ESS & Tail_ESS comfortably large');
+  brmsCodeLines.push('# plot(fit)     # chains should look stationary and well-mixed');
 
   const brmsCode = brmsCodeLines.join('\n');
 

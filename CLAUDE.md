@@ -74,6 +74,8 @@ Plus **Descendant** rule: conditioning on a descendant acts as weaker version.
 5. Detect bad controls (colliders, post-treatment variables, mediators)
 6. Report identifiability status
 
+Excluded mediators (direct effects) and selection variables count as conditioned-on throughout: the engine detects colliders they open, adds observed blockers to the adjustment set (reason `opened-collider`), and reports non-identifiability when an opener (e.g. unobserved mediator–outcome confounder) can't be blocked. Parents of the outcome with no connection to the treatment surface as optional **precision covariates** (include-toggle on the model card). Direct-effect model cards always carry the "no unmeasured mediator–outcome confounder" assumption note.
+
 ### Node UX Design
 - **Source handle** (triangle ▼/►): "effects..." — on BOTTOM (TB) or RIGHT (LR), tangent to circle edge
 - **Target handle** (circle ●): "is affected by..." — on TOP (TB) or LEFT (LR)
@@ -104,7 +106,9 @@ Types organized into expandable groups in the context menu:
 - **Continuous**: Continuous, Positive Continuous, Proportion (0–1)
 - **Discrete**: Categorical, Binary, Ordinal, Count
 - **Time**: Time (Series), Time (Cycle)
-- **Special**: Unobserved / Latent
+- **Special**: Unobserved / Latent, Selection (sampled on)
+
+Selection variables mark "the sample is conditioned on this by design" (McElreath A10: NBA membership, police stops). They render with a double-ring outline, are treated as permanently conditioned-on by the d-separation engine, and trigger warnings when selection opens a non-causal path (collider) or blocks part of the effect (mediator).
 
 ### Persistence
 - Auto-saves to localStorage on every state change (500ms debounce)
@@ -161,6 +165,10 @@ Lecture-driven development: follow along with McElreath's Statistical Rethinking
 26. ✅ About panel (estimand etymology + course link) — lives in the ☰ side panel
 27. ✅ Prior Wizard integrated as resizable side panel (☰ menu + model card entry points, estimand pre-fill, scale-aware prior propagation)
 28. ✅ GitHub Pages deployment via GitHub Actions (build + test + deploy on push to main)
+29. ✅ Direct-effect mediator–outcome confounding detection + assumption note (A9/A10)
+30. ✅ Precision covariate suggestions with include-toggle on model cards (A8)
+31. ✅ Selection variable type — sample selection as built-in conditioning, with warnings (A10)
+32. ✅ brms code: `fit <-` assignment, `chains = 4, cores = 4`, MCMC diagnostics reminder (A8)
 
 ## Prior Wizard (integrated)
 The Prior Wizard walks users through setting Bayesian priors step by step. Integrated into Estiplan April 2026; lives in `src/prior-wizard/` — see its README.md for full architecture. The original standalone app also remains at `../prior-wizard/` (local git only, no GitHub remote).
@@ -191,7 +199,9 @@ The Prior Wizard walks users through setting Bayesian priors step by step. Integ
 - ✅ Prior specification UI (default priors with educational tooltips, editable)
 - ✅ Prior Wizard integration (side panel, estimand pre-fill, scale-aware prior propagation)
 - ✅ GitHub Pages deployment (Actions: build + test + deploy)
-- ⬜ A08+: Continue with lectures (sensitivity analysis, measurement error, missing data, etc.)
+- ✅ A08–A10 quick wins: precision covariates, selection nodes, direct-effect assumption warnings, MCMC diagnostics in generated code
+- ⬜ A9–B1 backlog: sensitivity analysis phase 1 (hypothetical confounder), aggregated binomial type, indirect-effect estimand, simulation loop, multilevel varying intercepts
+- ⬜ B2+: Continue with lectures (measurement error, missing data, Gaussian processes, etc.)
 - ⬜ Full R script export
 - ⬜ Synthetic data simulation & testing loop
 - ⬜ Multiple generative models comparison

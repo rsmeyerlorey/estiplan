@@ -27,6 +27,19 @@ Completed. Before making the repo public or sharing broadly.
 
 ---
 
+## Lecture-driven updates — A8–A10 ✅
+
+Completed July 2026, driven by the 2026 lecture transcripts:
+
+- **Direct-effect identification fix** — the engine treats excluded mediators as conditioned-on: detects mediator–outcome confounding (opened colliders), adds observed blockers to the adjustment set (reason `opened-collider`), and direct-effect model cards carry the "no unmeasured mediator–outcome confounder" assumption note (A9/A10, Berkeley admissions)
+- **Precision covariates** — parents of the outcome unrelated to the treatment are suggested on model cards with an include-toggle (A8, wine judges)
+- **Selection variable type** — "Selection (sampled on)" marks variables the sample is conditioned on by design: double-ring node styling, treated as permanently conditioned, warnings when selection opens a path (collider) or blocks the effect (mediator) (A10, NBA / police stops)
+- **MCMC workflow in generated code** — `fit <- brm(..., chains = 4, cores = 4)` plus diagnostics reminders: Rhat, bulk/tail ESS, trace plots (A8)
+
+**Remaining from the A9–B1 plan:** sensitivity-analysis phase 1 (one-click hypothetical confounder → Tier 3.2), aggregated binomial outcome type (`k | trials(n)`), indirect-effect estimand kind, outcome-scale contrast code + post-stratification in the R export (Tier 2.3), multilevel varying intercepts (Tier 3.5, after more B lectures).
+
+---
+
 ## Tier 2 — Bayesian workflow features (lecture-driven)
 
 Core features that complete the DAG-to-inference pipeline McElreath teaches.

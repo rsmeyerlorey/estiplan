@@ -9,6 +9,7 @@ import {
   IDENTIFIABILITY_TOOLTIPS,
   SECTION_TOOLTIPS,
   ESTIMAND_KIND_TOOLTIPS,
+  SELECTION_WARNING_TOOLTIPS,
   reasonLabel,
   badControlLabel,
 } from '../../dag/explanations';
@@ -71,8 +72,10 @@ function EstimandCardComponent({ id, data }: NodeProps) {
   const backdoorResult = useMemo(() => {
     if (!showAnalysis) return null;
     const unobservedIds = new Set<string>();
+    const selectionIds = new Set<string>();
     variables.forEach((v) => {
       if (v.variableType === 'unobserved') unobservedIds.add(v.id);
+      if (v.variableType === 'selection') selectionIds.add(v.id);
     });
     return findBackdoorAdjustmentSet(
       causalEdges,
@@ -80,6 +83,7 @@ function EstimandCardComponent({ id, data }: NodeProps) {
       estimand.targetId,
       estimand.excludedMediators,
       unobservedIds,
+      selectionIds,
     );
   }, [showAnalysis, causalEdges, variables, estimand.sourceId, estimand.targetId, estimand.excludedMediators]);
 
@@ -185,6 +189,30 @@ function EstimandCardComponent({ id, data }: NodeProps) {
             </div>
           )}
 
+          {backdoorResult.selectionWarnings.length > 0 && (
+            <div className={styles.analysisSection}>
+              <InfoTip text={SECTION_TOOLTIPS.sampleSelection} align="left" tag="div">
+                <div className={styles.analysisSectionLabel}>
+                  Sample selection:
+                </div>
+              </InfoTip>
+              {backdoorResult.selectionWarnings.map((w) => {
+                const v = variables.get(w.variableId);
+                if (!v) return null;
+                return (
+                  <div key={w.variableId} className={styles.analysisItemWarn}>
+                    <InfoTip text={SELECTION_WARNING_TOOLTIPS[w.type] || w.explanation}>
+                      <span className={styles.analysisTagBad}>
+                        {w.type === 'selection-mediator' ? 'blocks effect' : 'opens path'}
+                      </span>
+                    </InfoTip>
+                    {v.name}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {backdoorResult.badControls.length > 0 && (
             <div className={styles.analysisSection}>
               <InfoTip text={SECTION_TOOLTIPS.doNotConditionOn} align="left" tag="div">
@@ -213,8 +241,10 @@ function EstimandCardComponent({ id, data }: NodeProps) {
             </div>
           )}
 
-          {backdoorResult.adjustmentSet.length === 0 &&
-            backdoorResult.badControls.length === 0 && (
+          {backdoorResult.identifiable &&
+            backdoorResult.adjustmentSet.length === 0 &&
+            backdoorResult.badControls.length === 0 &&
+            backdoorResult.selectionWarnings.length === 0 && (
               <div className={styles.analysisNote}>
                 No confounds detected &mdash; simple bivariate model
               </div>

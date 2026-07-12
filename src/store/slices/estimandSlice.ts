@@ -41,38 +41,17 @@ export interface EstimandSlice {
     modelId: string,
     variables: Map<string, Variable>,
   ) => void;
+  toggleModelPrecisionVar: (
+    modelId: string,
+    variableId: string,
+    variables: Map<string, Variable>,
+  ) => void;
   updateModelPrior: (
     modelId: string,
     priorIndex: number,
     newPrior: string,
     variables: Map<string, Variable>,
   ) => void;
-}
-
-/**
- * Rebuild brms code string, replacing the prior block with edited priors.
- */
-function rebuildBrmsWithPriors(baseCode: string, priors: PriorSpec[]): string {
-  // Strip everything from "prior = c(" onwards (or the closing paren)
-  const formulaMatch = baseCode.match(/^brm\([^,]+,\s*\n\s*data = d,\s*\n\s*family = [^,)]+/s);
-  if (!formulaMatch) return baseCode;
-
-  const base = formulaMatch[0];
-
-  if (priors.length === 0) return base + ')';
-
-  const priorLines = priors.map((p, i) => {
-    const coefArg = p.coef ? `, coef = "${p.coef}"` : '';
-    const comma = i < priors.length - 1 ? ',' : '';
-    return `  set_prior("${p.prior}", class = "${p.class}"${coefArg})${comma}`;
-  });
-
-  return [
-    base + ',',
-    `    prior = c(`,
-    ...priorLines,
-    `    ))`,
-  ].join('\n');
 }
 
 /**
@@ -86,6 +65,7 @@ function computeModelFields(
   excludedMediatorIds: string[],
   interaction: boolean,
   variables: Map<string, Variable>,
+  priorsOverride?: PriorSpec[],
 ) {
   const mediatorVars =
     kind === 'direct'
@@ -107,7 +87,14 @@ function computeModelFields(
     }
   }
 
-  const model = generateModel(target, source, kind, conditionOn, interaction);
+  const model = generateModel(
+    target,
+    source,
+    kind,
+    conditionOn,
+    interaction,
+    priorsOverride,
+  );
   return {
     mathLines: model.mathLines,
     brmsCode: model.brmsCode,
@@ -203,8 +190,10 @@ export const createEstimandSlice: StateCreator<
 
     // Run backdoor criterion
     const unobservedIds = new Set<string>();
+    const selectionIds = new Set<string>();
     variables.forEach((v) => {
       if (v.variableType === 'unobserved') unobservedIds.add(v.id);
+      if (v.variableType === 'selection') selectionIds.add(v.id);
     });
     const backdoorResult = findBackdoorAdjustmentSet(
       edges,
@@ -212,6 +201,7 @@ export const createEstimandSlice: StateCreator<
       estimand.targetId,
       estimand.excludedMediators,
       unobservedIds,
+      selectionIds,
     );
 
     const conditionedOn = backdoorResult.adjustmentSet.map(
@@ -250,6 +240,16 @@ export const createEstimandSlice: StateCreator<
       identifiable: backdoorResult.identifiable,
       conditionedOn,
       excludedMediators: estimand.excludedMediators,
+      precisionCandidates: backdoorResult.precisionCandidates.map((p) => ({
+        variableId: p.variableId,
+        explanation: p.explanation,
+      })),
+      precisionVars: [],
+      selectionWarnings: backdoorResult.selectionWarnings.map((w) => ({
+        variableId: w.variableId,
+        type: w.type,
+        explanation: w.explanation,
+      })),
       interaction,
       ...modelFields,
     };
@@ -354,7 +354,7 @@ export const createEstimandSlice: StateCreator<
           source,
           target,
           m.kind,
-          m.conditionedOn,
+          [...m.conditionedOn, ...(m.precisionVars ?? [])],
           m.excludedMediators,
           newInteraction,
           variables,
@@ -363,6 +363,41 @@ export const createEstimandSlice: StateCreator<
         return {
           ...m,
           interaction: newInteraction,
+          ...modelFields,
+        };
+      });
+
+      return { models };
+    });
+  },
+
+  toggleModelPrecisionVar: (modelId, variableId, variables) => {
+    set((state) => {
+      const models = state.models.map((m) => {
+        if (m.id !== modelId) return m;
+
+        const current = m.precisionVars ?? [];
+        const next = current.includes(variableId)
+          ? current.filter((id) => id !== variableId)
+          : [...current, variableId];
+
+        const source = variables.get(m.sourceId);
+        const target = variables.get(m.targetId);
+        if (!source || !target) return m;
+
+        const modelFields = computeModelFields(
+          source,
+          target,
+          m.kind,
+          [...m.conditionedOn, ...next],
+          m.excludedMediators,
+          m.interaction,
+          variables,
+        );
+
+        return {
+          ...m,
+          precisionVars: next,
           ...modelFields,
         };
       });
@@ -381,7 +416,7 @@ export const createEstimandSlice: StateCreator<
           i === priorIndex ? { ...p, prior: newPrior } : p,
         );
 
-        // Regenerate brms code with updated priors
+        // Regenerate brms code with the edited priors baked in
         const source = variables.get(m.sourceId);
         const target = variables.get(m.targetId);
         if (!source || !target) return m;
@@ -390,20 +425,17 @@ export const createEstimandSlice: StateCreator<
           source,
           target,
           m.kind,
-          m.conditionedOn,
+          [...m.conditionedOn, ...(m.precisionVars ?? [])],
           m.excludedMediators,
           m.interaction,
           variables,
+          newPriors,
         );
-
-        // Replace the generated priors with the user's edited ones
-        // and regenerate brms code using them
-        const brmsCode = rebuildBrmsWithPriors(modelFields.brmsCode, newPriors);
 
         return {
           ...m,
+          ...modelFields,
           priors: newPriors,
-          brmsCode,
         };
       });
 

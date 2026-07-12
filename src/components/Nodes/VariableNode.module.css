@@ -39,6 +39,21 @@
   border-style: dashed;
 }
 
+/* Selection nodes: double ring — the sample is conditioned on this by design */
+.circleSelection {
+  box-shadow:
+    var(--estiplan-node-shadow),
+    0 0 0 3px var(--estiplan-node-bg),
+    0 0 0 5px var(--estiplan-node-border);
+}
+
+.circleSelection.circleHighlighted {
+  box-shadow:
+    0 0 12px var(--estiplan-edge-highlight),
+    0 0 0 3px var(--estiplan-node-bg),
+    0 0 0 5px var(--estiplan-edge-highlight);
+}
+
 .shorthand {
   font-family: var(--estiplan-font);
   font-size: 24px;

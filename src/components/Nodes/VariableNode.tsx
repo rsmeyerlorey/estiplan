@@ -57,6 +57,7 @@ function VariableNodeComponent({ id, data }: NodeProps) {
     isHighlighted ? styles.circleHighlighted : '',
     isDimmed ? styles.circleDimmed : '',
     variable.variableType === 'unobserved' ? styles.circleUnobserved : '',
+    variable.variableType === 'selection' ? styles.circleSelection : '',
   ]
     .filter(Boolean)
     .join(' ');

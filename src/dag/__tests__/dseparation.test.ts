@@ -102,10 +102,11 @@ describe('01 — Waffle Divorce', () => {
     );
 
     expect(result.identifiable).toBe(true);
-    // Must condition on South (fork) — Marriage Rate should also be in the
-    // adjustment because it's an excluded mediator for direct effect,
-    // but the adjustment set from backdoor only includes South
-    expect(adjustmentIds(result)).toContain('v_south');
+    // The engine accounts for the excluded mediator being conditioned on:
+    // the only backdoor path A ← S → M → D is already blocked at the pipe M,
+    // so the minimal additional adjustment set is empty. (Previously the
+    // engine ignored mediator conditioning and demanded South as well.)
+    expect(result.adjustmentSet).toHaveLength(0);
   });
 
   it('1c: total effect of South → Divorce Rate', () => {
@@ -800,5 +801,175 @@ describe('11 — Predictor type handling in brms code', () => {
     const model = generateModel(outcome, treatment, 'total', [adjCat], true);
 
     expect(model.brmsCode).toContain('rainfall:factor(region)');
+  });
+});
+
+// ── Direct effects: mediator–outcome confounding (McElreath A9/A10, Berkeley) ──
+
+describe('Direct effect with mediator–outcome confounding (Berkeley admissions)', () => {
+  // G → D → A, G → A, U → D, U → A  (gender, department, admission, ability)
+  const edges = [
+    { source: 'g', target: 'd' },
+    { source: 'd', target: 'a' },
+    { source: 'g', target: 'a' },
+    { source: 'u', target: 'd' },
+    { source: 'u', target: 'a' },
+  ];
+
+  it('total effect of G → A is identifiable with no adjustment', () => {
+    const result = findBackdoorAdjustmentSet(edges, 'g', 'a', [], new Set(['u']));
+    expect(result.identifiable).toBe(true);
+    expect(result.adjustmentSet).toHaveLength(0);
+  });
+
+  it('direct effect is NOT identifiable — conditioning on D opens G → D ← U → A', () => {
+    const result = findBackdoorAdjustmentSet(
+      edges,
+      'g',
+      'a',
+      ['d'], // condition on the mediator
+      new Set(['u']), // ability is unobserved
+    );
+    expect(result.identifiable).toBe(false);
+  });
+
+  it('direct effect IS identifiable when the mediator–outcome confounder is observed', () => {
+    const result = findBackdoorAdjustmentSet(edges, 'g', 'a', ['d'], new Set());
+    expect(result.identifiable).toBe(true);
+    expect(adjustmentIds(result)).toEqual(['u']);
+    expect(adjustmentReasons(result)['u']).toBe('opened-collider');
+  });
+});
+
+// ── Selection nodes: sample conditioned by design (McElreath A10) ──
+
+describe('Selection nodes', () => {
+  it('selection on a collider opens an unblockable path', () => {
+    // X → Y, X → S ← Y — sample selected on S (e.g. NBA membership)
+    const edges = [
+      { source: 'x', target: 'y' },
+      { source: 'x', target: 's' },
+      { source: 'y', target: 's' },
+    ];
+
+    const noSelection = findBackdoorAdjustmentSet(edges, 'x', 'y');
+    expect(noSelection.identifiable).toBe(true);
+
+    const result = findBackdoorAdjustmentSet(
+      edges, 'x', 'y', [], new Set(), new Set(['s']),
+    );
+    expect(result.identifiable).toBe(false);
+    expect(result.selectionWarnings.map((w) => w.type)).toContain(
+      'selection-collider',
+    );
+  });
+
+  it('selection-opened path can be re-blocked by an observed variable', () => {
+    // X → Y, X → S ← Z, Z → Y — selection on S, but Z blocks the opened path
+    const edges = [
+      { source: 'x', target: 'y' },
+      { source: 'x', target: 's' },
+      { source: 'z', target: 's' },
+      { source: 'z', target: 'y' },
+    ];
+    const result = findBackdoorAdjustmentSet(
+      edges, 'x', 'y', [], new Set(), new Set(['s']),
+    );
+    expect(result.identifiable).toBe(true);
+    expect(adjustmentIds(result)).toEqual(['z']);
+    expect(adjustmentReasons(result)['z']).toBe('opened-collider');
+    expect(result.selectionWarnings).toHaveLength(0);
+  });
+
+  it('selection on a mediator blocks part of the causal effect', () => {
+    // X → S → Y, X → Y — sample selected on S (e.g. only police stops)
+    const edges = [
+      { source: 'x', target: 's' },
+      { source: 's', target: 'y' },
+      { source: 'x', target: 'y' },
+    ];
+    const result = findBackdoorAdjustmentSet(
+      edges, 'x', 'y', [], new Set(), new Set(['s']),
+    );
+    expect(result.identifiable).toBe(false);
+    expect(result.selectionWarnings.map((w) => w.type)).toContain(
+      'selection-mediator',
+    );
+  });
+
+  it('selection nodes are not listed as bad controls', () => {
+    const edges = [
+      { source: 'x', target: 'y' },
+      { source: 'x', target: 's' },
+      { source: 'y', target: 's' },
+    ];
+    const result = findBackdoorAdjustmentSet(
+      edges, 'x', 'y', [], new Set(), new Set(['s']),
+    );
+    expect(badControlIds(result)).not.toContain('s');
+  });
+});
+
+// ── Precision covariates (McElreath A8, wine judges) ──
+
+describe('Precision covariates', () => {
+  it('parent of outcome unrelated to treatment is suggested', () => {
+    // X → Y, J → Y — J is the wine judge: not a confound, but useful
+    const edges = [
+      { source: 'x', target: 'y' },
+      { source: 'j', target: 'y' },
+    ];
+    const result = findBackdoorAdjustmentSet(edges, 'x', 'y');
+    expect(result.identifiable).toBe(true);
+    expect(result.adjustmentSet).toHaveLength(0);
+    expect(result.precisionCandidates.map((p) => p.variableId)).toEqual(['j']);
+  });
+
+  it('a confounder is required adjustment, not a precision suggestion', () => {
+    const edges = [
+      { source: 'x', target: 'y' },
+      { source: 'j', target: 'y' },
+      { source: 'j', target: 'x' },
+    ];
+    const result = findBackdoorAdjustmentSet(edges, 'x', 'y');
+    expect(adjustmentIds(result)).toEqual(['j']);
+    expect(result.precisionCandidates).toHaveLength(0);
+  });
+
+  it('post-treatment parents of the outcome are not suggested', () => {
+    // X → M → Y, X → Y — M is a parent of Y but a descendant of X
+    const edges = [
+      { source: 'x', target: 'm' },
+      { source: 'm', target: 'y' },
+      { source: 'x', target: 'y' },
+    ];
+    const result = findBackdoorAdjustmentSet(edges, 'x', 'y');
+    expect(result.precisionCandidates).toHaveLength(0);
+  });
+
+  it('unobserved parents of the outcome are not suggested', () => {
+    const edges = [
+      { source: 'x', target: 'y' },
+      { source: 'u', target: 'y' },
+    ];
+    const result = findBackdoorAdjustmentSet(edges, 'x', 'y', [], new Set(['u']));
+    expect(result.precisionCandidates).toHaveLength(0);
+  });
+});
+
+// ── brms code: sampler settings and diagnostics reminder ──
+
+describe('brms code — MCMC workflow (McElreath A8)', () => {
+  const dag = loadDag('02-simple-fork.estiplan.json');
+
+  it('assigns the fit, sets chains/cores, and reminds about diagnostics', () => {
+    const outcome = getVariable(dag, 'v_y');
+    const treatment = getVariable(dag, 'v_x');
+    const model = generateModel(outcome, treatment, 'total', [], false);
+
+    expect(model.brmsCode).toContain('fit <- brm(');
+    expect(model.brmsCode).toContain('chains = 4, cores = 4)');
+    expect(model.brmsCode).toContain('# summary(fit)');
+    expect(model.brmsCode).toContain('Rhat');
   });
 });
